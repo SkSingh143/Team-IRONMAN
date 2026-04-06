@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+const HERO_TYPED_TEXT = 'synchronized';
+const HERO_TYPE_STEP_MS = 118;
+const HERO_TYPE_PAUSE_MS = 500;
+const HERO_TYPE_LOOPS = 5;
+
 const features = [
   {
     icon: <PenTool className="w-6 h-6" />,
@@ -50,6 +55,8 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [typeStep, setTypeStep] = useState(0);
+  const [isTypeAnimating, setIsTypeAnimating] = useState(true);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -58,6 +65,63 @@ export default function HomePage() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const totalSteps = HERO_TYPED_TEXT.length;
+    let timeoutId;
+    let cancelled = false;
+    let currentStep = 0;
+    let direction = 1;
+    let completedLoops = 0;
+
+    const schedule = (delay) => {
+      timeoutId = window.setTimeout(() => {
+        if (cancelled) return;
+
+        if (direction === 1) {
+          if (currentStep < totalSteps) {
+            currentStep += 1;
+            setTypeStep(currentStep);
+            schedule(HERO_TYPE_STEP_MS);
+            return;
+          }
+
+          direction = -1;
+          schedule(HERO_TYPE_PAUSE_MS);
+          return;
+        }
+
+        if (currentStep > 0) {
+          currentStep -= 1;
+          setTypeStep(currentStep);
+          schedule(HERO_TYPE_STEP_MS);
+          return;
+        }
+
+        completedLoops += 1;
+        if (completedLoops >= HERO_TYPE_LOOPS) {
+          timeoutId = window.setTimeout(() => {
+            if (cancelled) return;
+            setTypeStep(totalSteps);
+            setIsTypeAnimating(false);
+          }, HERO_TYPE_PAUSE_MS);
+          return;
+        }
+
+        direction = 1;
+        schedule(HERO_TYPE_PAUSE_MS);
+      }, delay);
+    };
+
+    setTypeStep(0);
+    setIsTypeAnimating(true);
+    schedule(HERO_TYPE_PAUSE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   if (user) {
@@ -80,6 +144,9 @@ export default function HomePage() {
       transition: { duration: 0.55, ease: 'easeOut' },
     },
   };
+
+  const typedVisible = HERO_TYPED_TEXT.slice(0, Math.min(typeStep, HERO_TYPED_TEXT.length));
+  const isTyping = isTypeAnimating;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-root text-main">
@@ -180,7 +247,10 @@ export default function HomePage() {
               <span className="absolute -bottom-2 left-0 h-3 w-full rounded-full bg-accent/35 blur-md" />
             </span>
             <br />
-            synchronized for every idea.
+            <span className="mt-3 inline-flex flex-wrap items-end gap-x-3 gap-y-2">
+              <TypingWord text={HERO_TYPED_TEXT} visibleText={typedVisible} isTyping={isTyping} />
+              <span className="text-main">for every day.</span>
+            </span>
           </motion.h1>
 
           <motion.p
@@ -321,6 +391,31 @@ function FloatingTag({ label, value, align = 'left' }) {
       <div className="text-[10px] uppercase tracking-[0.28em] text-white/50">{label}</div>
       <div className="mt-1 text-sm font-semibold">{value}</div>
     </div>
+  );
+}
+
+function TypingWord({ text, visibleText, isTyping }) {
+  return (
+    <motion.span
+      aria-label={text}
+      initial={{ opacity: 0, x: -32, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.85, ease: 'easeOut' }}
+      className="relative inline-grid"
+    >
+      <span className="invisible whitespace-pre">{text}</span>
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 inline-flex items-center whitespace-pre text-primary">
+        {visibleText}
+        {isTyping && (
+          <motion.span
+            aria-hidden="true"
+            animate={{ opacity: [0.15, 1, 0.15] }}
+            transition={{ duration: 0.95, repeat: Infinity, ease: 'easeInOut' }}
+            className="ml-1 inline-block h-[0.88em] w-[2px] rounded-full bg-current"
+          />
+        )}
+      </span>
+    </motion.span>
   );
 }
 
