@@ -4,7 +4,7 @@ import useUIStore from '../store/uiStore';
 import useRoomStore from '../store/roomStore';
 import useAuthStore from '../store/authStore';
 import { wsManager } from '../utils/wsManager';
-import { drawStroke } from '../utils/canvasUtils';
+import { drawStroke, drawShape } from '../utils/canvasUtils';
 
 export function useCanvas(canvasRef) {
   const isDrawing = useRef(false);
@@ -48,6 +48,8 @@ export function useCanvas(canvasRef) {
     elements.forEach(el => {
       if (el.type === 'stroke') {
         drawStroke(ctx, el);
+      } else if (el.type === 'shape') {
+        drawShape(ctx, el);
       }
     });
   }, [elements, getCtx, canvasRef]);
@@ -129,13 +131,33 @@ export function useCanvas(canvasRef) {
     if (!ctx) return;
 
     const pts = currentPoints.current;
-    const lastPt = pts[pts.length - 1];
-    const newPt = [pos.x, pos.y];
+    
+    if (activeTool === 'pen' || activeTool === 'eraser') {
+      const lastPt = pts[pts.length - 1];
+      const newPt = [pos.x, pos.y];
 
-    // Draw live segment
-    drawLiveSegment(ctx, lastPt, newPt);
-    currentPoints.current.push(newPt);
-  }, [getCtx, getPos, drawLiveSegment, roomId]);
+      // Draw live segment
+      drawLiveSegment(ctx, lastPt, newPt);
+      pts.push(newPt);
+    } else {
+      // Shape tools
+      const startPt = pts[0];
+      const endPt = [pos.x, pos.y];
+      pts[1] = endPt;
+
+      redrawAll();
+      
+      const tempShape = {
+        type: 'shape',
+        shapeType: activeTool,
+        start: startPt,
+        end: endPt,
+        color: activeColor,
+        lineWidth: lineWidth
+      };
+      drawShape(ctx, tempShape);
+    }
+  }, [getCtx, getPos, drawLiveSegment, redrawAll, activeTool, activeColor, lineWidth, roomId]);
 
   const onPointerUp = useCallback(() => {
     if (!isDrawing.current) return;
@@ -148,16 +170,36 @@ export function useCanvas(canvasRef) {
     }
 
     const userId = useAuthStore.getState().user?._id;
-    const element = {
-      elementId: crypto.randomUUID(),
-      type: 'stroke',
-      points: pts,
-      color: activeColor,
-      lineWidth: lineWidth,
-      tool: activeTool,
-      theme: canvasTheme,
-      userId,
-    };
+    let element;
+
+    if (activeTool === 'pen' || activeTool === 'eraser') {
+      element = {
+        elementId: crypto.randomUUID(),
+        type: 'stroke',
+        points: pts,
+        color: activeColor,
+        lineWidth: lineWidth,
+        tool: activeTool,
+        theme: canvasTheme,
+        userId,
+      };
+    } else {
+      if (!pts[1]) {
+        currentPoints.current = [];
+        return;
+      }
+      element = {
+        elementId: crypto.randomUUID(),
+        type: 'shape',
+        shapeType: activeTool,
+        start: pts[0],
+        end: pts[1],
+        color: activeColor,
+        lineWidth: lineWidth,
+        theme: canvasTheme,
+        userId,
+      };
+    }
 
     // Add to local store
     addElement(element);

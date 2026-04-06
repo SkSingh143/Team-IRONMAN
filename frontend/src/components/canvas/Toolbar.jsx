@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import useUIStore from '../../store/uiStore';
 import useRoomStore from '../../store/roomStore';
 import useAuthStore from '../../store/authStore';
 import { wsManager } from '../../utils/wsManager';
-import { motion } from 'framer-motion';
-import { PenTool, Eraser, Undo, Moon, Sun, Trash2, Download, ShieldAlert } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PenTool, Eraser, Undo, Moon, Sun, Trash2, Download, ShieldAlert, Square, Circle, Star, Palette, ChevronRight } from 'lucide-react';
 import { exportAsImage } from '../../utils/canvasUtils';
 
 const PRESET_COLORS = [
@@ -23,6 +24,8 @@ export default function Toolbar() {
   const allowAllPermissions = useRoomStore(s => s.allowAllPermissions);
   const myUserId = useAuthStore(s => s.user?._id);
   
+  const [isExpanded, setIsExpanded] = useState(true);
+
   const currentMember = members.find(m => m.userId === myUserId);
   const isAdmin = currentMember?.role === 'admin';
   const hasPermission = isAdmin || currentMember?.canParticipate || allowAllPermissions;
@@ -42,128 +45,112 @@ export default function Toolbar() {
   };
 
   return (
-    <motion.div 
-      initial={{ y: 50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 p-3 bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-20 max-w-[95vw] overflow-x-auto hide-scrollbar"
-    >
-      {/* Board Theme — always accessible */}
-      <div className="flex flex-col items-center justify-center px-2 border-r border-border shrink-0">
-         <ToolBtn 
-            onClick={toggleTheme} 
-            icon={canvasTheme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-400" />} 
-            title="Toggle Board Theme"
-          />
-      </div>
+    <div className="absolute right-6 top-24 z-20 flex items-start gap-3 max-h-[85vh] pointer-events-none">
+      
+      {/* Toggle Button */}
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="p-3 bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl pointer-events-auto hover:bg-surface-elevated transition-colors"
+        title={isExpanded ? "Collapse Toolbar" : "Expand Toolbar"}
+      >
+        {isExpanded ? <ChevronRight className="w-5 h-5 text-gray-400" /> : <Palette className="w-5 h-5 text-primary" />}
+      </button>
 
-      {/* Tools — permission gated */}
-      <div className="flex flex-col gap-2 px-3 border-r border-border shrink-0">
-        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Tool</span>
-        <div className="flex gap-1">
-          <div className="relative group">
-            <ToolBtn 
-              active={activeTool === 'pen'} 
-              onClick={() => hasPermission && setTool('pen')} 
-              icon={<PenTool className={`w-5 h-5 ${!hasPermission ? 'opacity-40' : ''}`} />} 
-              disabled={!hasPermission}
-            />
-            {!hasPermission && <DisabledTooltip />}
-          </div>
-          <div className="relative group">
-            <ToolBtn 
-              active={activeTool === 'eraser'} 
-              onClick={() => hasPermission && setTool('eraser')} 
-              icon={<Eraser className={`w-5 h-5 ${!hasPermission ? 'opacity-40' : ''}`} />} 
-              disabled={!hasPermission}
-            />
-            {!hasPermission && <DisabledTooltip />}
-          </div>
-          <div className="w-px bg-border mx-1" />
-          <div className="relative group">
-            <ToolBtn 
-              onClick={hasPermission ? handleUndo : undefined} 
-              icon={<Undo className={`w-5 h-5 ${!hasPermission ? 'opacity-40' : ''}`} />} 
-              title="Undo"
-              disabled={!hasPermission}
-            />
-            {!hasPermission && <DisabledTooltip />}
-          </div>
-          <ToolBtn 
-            onClick={handleExport} 
-            icon={<Download className="w-5 h-5" />} 
-            title="Export as Image"
-          />
-          {isAdmin && (
-            <ToolBtn 
-              onClick={handleClearCanvas} 
-              icon={<Trash2 className="w-5 h-5 text-red-500" />} 
-              title="Clear Canvas"
-            />
-          )}
-        </div>
-      </div>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 30, opacity: 0 }}
+            className="w-48 bg-surface/90 backdrop-blur-xl border border-border rounded-3xl shadow-2xl p-4 flex flex-col gap-6 pointer-events-auto overflow-y-auto max-h-[80vh] custom-scrollbar"
+          >
+            {/* Permission indicator */}
+            {!hasPermission && (
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-bold leading-tight">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>Disabled by Admin</span>
+              </div>
+            )}
 
-      {/* Colors — permission gated */}
-      <div className={`flex flex-col gap-2 px-3 border-r border-border ${!hasPermission ? 'opacity-40 pointer-events-none' : ''}`}>
-        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1 hidden sm:block">Color</span>
-        <div className="flex items-center gap-3">
-          <div className="grid grid-cols-6 gap-1.5">
-            {PRESET_COLORS.map(c => (
-              <button
-                key={c}
-                className={`w-6 h-6 rounded-sm border-2 transition-all ${activeColor === c ? 'border-root ring-2 ring-primary scale-110' : 'border-transparent hover:scale-110'}`}
-                style={{ backgroundColor: c }}
-                onClick={() => setColor(c)}
-                disabled={!hasPermission}
-              />
-            ))}
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <input
-              type="color"
-              value={activeColor}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-8 h-8 rounded-md cursor-pointer border-0 p-0 bg-transparent"
-              disabled={!hasPermission}
-            />
-            <span className="text-[10px] font-mono text-gray-500 uppercase">{activeColor}</span>
-          </div>
-        </div>
-      </div>
+            {/* Drawing Tools */}
+            <div className="flex flex-col gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Draw</span>
+              <div className="grid grid-cols-3 gap-2">
+                <ToolBtn active={activeTool === 'pen'} onClick={() => hasPermission && setTool('pen')} icon={<PenTool className="w-4 h-4" />} title="Pen" disabled={!hasPermission}/>
+                <ToolBtn active={activeTool === 'eraser'} onClick={() => hasPermission && setTool('eraser')} icon={<Eraser className="w-4 h-4" />} title="Eraser" disabled={!hasPermission}/>
+              </div>
+            </div>
 
-      {/* Size — permission gated */}
-      <div className={`hidden md:flex flex-col gap-2 px-3 ${!hasPermission ? 'opacity-40 pointer-events-none' : ''}`}>
-        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Size</span>
-        <div className="flex items-center gap-1">
-          {SIZES.map(s => (
-            <button
-              key={s}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${lineWidth === s ? 'bg-primary/20 ring-1 ring-primary/50' : 'hover:bg-surface-elevated'}`}
-              onClick={() => setLineWidth(s)}
-              disabled={!hasPermission}
-            >
-              <span className="block bg-gray-300 rounded-full" style={{ width: s, height: s }} />
-            </button>
-          ))}
-        </div>
-      </div>
+            {/* Shapes */}
+            <div className="flex flex-col gap-3 pt-4 border-t border-border">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Shapes</span>
+              <div className="grid grid-cols-3 gap-2">
+                <ToolBtn active={activeTool === 'rect'} onClick={() => hasPermission && setTool('rect')} icon={<Square className="w-4 h-4" />} title="Rectangle" disabled={!hasPermission}/>
+                <ToolBtn active={activeTool === 'circle'} onClick={() => hasPermission && setTool('circle')} icon={<Circle className="w-4 h-4" />} title="Circle" disabled={!hasPermission}/>
+                <ToolBtn active={activeTool === 'star'} onClick={() => hasPermission && setTool('star')} icon={<Star className="w-4 h-4" />} title="Star" disabled={!hasPermission}/>
+              </div>
+            </div>
 
-      {/* Permission indicator */}
-      {!hasPermission && (
-        <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-[10px] font-bold shrink-0">
-          <ShieldAlert className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Disabled by Admin</span>
-        </div>
-      )}
-    </motion.div>
-  );
-}
+            {/* Colors */}
+            <div className={`flex flex-col gap-3 pt-4 border-t border-border ${!hasPermission ? 'opacity-40 pointer-events-none' : ''}`}>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Color</span>
+              <div className="grid grid-cols-4 gap-2">
+                {PRESET_COLORS.map(c => (
+                  <button
+                    key={c}
+                    className={`w-full aspect-square rounded-lg border-2 transition-transform ${activeColor === c ? 'border-primary shadow-lg scale-110' : 'border-transparent hover:scale-110'}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setColor(c)}
+                    disabled={!hasPermission}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2 bg-surface-input p-2 rounded-xl">
+                <input
+                  type="color"
+                  value={activeColor}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent shrink-0"
+                  disabled={!hasPermission}
+                />
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">{activeColor}</span>
+              </div>
+            </div>
 
-function DisabledTooltip() {
-  return (
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-gray-800 text-gray-300 text-[10px] rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-border shadow-lg z-50">
-      <ShieldAlert className="w-3 h-3 inline mr-0.5 text-amber-400" />
-      Disabled by Admin
+            {/* Size */}
+            <div className={`flex flex-col gap-3 pt-4 border-t border-border ${!hasPermission ? 'opacity-40 pointer-events-none' : ''}`}>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Thickness</span>
+              <div className="grid grid-cols-3 gap-2">
+                {SIZES.map(s => (
+                  <button
+                    key={s}
+                    className={`h-10 flex items-center justify-center rounded-xl transition-all ${lineWidth === s ? 'bg-primary/20 border border-primary/50' : 'bg-surface-input hover:bg-surface-elevated border border-transparent'}`}
+                    onClick={() => setLineWidth(s)}
+                    disabled={!hasPermission}
+                  >
+                    <span className="block bg-gray-300 rounded-full" style={{ width: s, height: s }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-border mt-auto">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Actions</span>
+              <div className="grid grid-cols-2 gap-2">
+                <ToolBtn onClick={hasPermission ? handleUndo : undefined} icon={<Undo className="w-4 h-4" />} title="Undo" disabled={!hasPermission}/>
+                <ToolBtn onClick={handleExport} icon={<Download className="w-4 h-4" />} title="Export as image"/>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <ToolBtn onClick={toggleTheme} icon={canvasTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />} title="Toggle Theme" />
+                {isAdmin && (
+                  <ToolBtn onClick={handleClearCanvas} icon={<Trash2 className="w-4 h-4 text-red-500" />} title="Clear Canvas" />
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -172,13 +159,13 @@ function ToolBtn({ active, onClick, icon, title, disabled }) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
-      title={title}
-      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+      title={disabled ? "Disabled by Admin" : title}
+      className={`relative w-full aspect-[4/3] flex items-center justify-center rounded-xl transition-all flex-col ${
         disabled 
-          ? 'text-gray-600 bg-transparent border border-transparent cursor-not-allowed'
+          ? 'text-gray-600 bg-surface-input/50 cursor-not-allowed'
           : active 
-            ? 'bg-primary border border-primary-light text-white shadow-lg shadow-primary/20' 
-            : 'text-gray-400 bg-transparent border border-transparent hover:bg-surface-elevated hover:text-white'
+            ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+            : 'text-gray-400 bg-surface-input hover:bg-surface-elevated hover:text-white'
       }`}
     >
       {icon}
