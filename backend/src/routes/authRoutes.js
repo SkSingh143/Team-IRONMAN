@@ -8,7 +8,7 @@ const { authLimiter } = require('../middleware/rateLimiter');
 const registerRules = [
   body('email').isEmail().normalizeEmail(),
   body('username').isAlphanumeric().isLength({ min: 2, max: 30 }),
-  body('password').isLength({ min: 8 }),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ];
 
 const loginRules = [

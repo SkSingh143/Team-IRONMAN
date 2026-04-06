@@ -4,5 +4,5 @@ import useAuthStore from '../../store/authStore';
 
 export default function PrivateRoute({ children }) {
   const { user } = useAuthStore();
-  return user ? children : <Navigate to="/login" replace />;
+  return user ? children : <Navigate to="/" replace />;
 }

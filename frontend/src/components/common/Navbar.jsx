@@ -29,7 +29,7 @@ export default function Navbar({ roomName, roomId }) {
       console.error('Logout error', err);
     }
     clearAuth();
-    navigate('/login');
+    navigate('/');
   };
 
   const handleCopy = () => {
