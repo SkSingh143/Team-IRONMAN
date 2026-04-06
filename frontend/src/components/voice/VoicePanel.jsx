@@ -160,12 +160,16 @@ export default function VoicePanel() {
                     </div>
                   )}
 
-                  {/* Speaking indicator label */}
-                  {p.isSpeaking && (
-                    <div className="mt-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                      Speaking
-                    </div>
-                  )}
+                  {/* Speaking indicator / Wave animation */}
+                  <div className="h-4 mt-2 mb-1 flex items-center justify-center">
+                    {p.isSpeaking && (
+                      <div className="flex items-center gap-1 opacity-80">
+                        <motion.div animate={{ height: [4, 12, 4] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-1 bg-primary rounded-full" />
+                        <motion.div animate={{ height: [8, 16, 8] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-1 bg-primary rounded-full" />
+                        <motion.div animate={{ height: [4, 14, 4] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-1 bg-primary rounded-full" />
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               );
             })}

@@ -210,16 +210,20 @@ export default function RoomPage() {
 
           {/* Active Tab Content */}
           <div className="flex-1 relative w-full h-full bg-root">
-            {activeTab === 'canvas' && (
-              <>
-                <Canvas />
-                <Toolbar />
-                <CursorOverlay />
-              </>
-            )}
-            {activeTab === 'code' && <CodePanel />}
-            {activeTab === 'poll' && <PollPanel />}
-            {activeTab === 'voice' && <VoicePanel />}
+            <div className={`w-full h-full ${activeTab === 'canvas' ? 'block' : 'hidden'}`}>
+              <Canvas />
+              <Toolbar />
+              <CursorOverlay />
+            </div>
+            <div className={`w-full h-full ${activeTab === 'code' ? 'block' : 'hidden'}`}>
+              <CodePanel />
+            </div>
+            <div className={`w-full h-full ${activeTab === 'poll' ? 'block' : 'hidden'}`}>
+              <PollPanel />
+            </div>
+            <div className={`w-full h-full ${activeTab === 'voice' ? 'block' : 'hidden'}`}>
+              <VoicePanel />
+            </div>
           </div>
         </main>
 

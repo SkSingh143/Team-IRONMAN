@@ -27,7 +27,14 @@ export function useVoice(roomId) {
     setParticipants(prev => {
       const next = new Map(prev);
       const existing = next.get(userId) || {};
-      next.set(userId, { ...existing, ...data });
+      
+      // Clean undefined values from data so they don't overwrite existing
+      const cleanData = {};
+      Object.entries(data).forEach(([k, v]) => {
+        if (v !== undefined) cleanData[k] = v;
+      });
+      
+      next.set(userId, { ...existing, ...cleanData });
       return next;
     });
   }, []);
@@ -115,14 +122,15 @@ export function useVoice(roomId) {
 
     // Someone joined voice -> initiate offer
     const handleJoin = async (payload) => {
-      if (payload.userId === myUserId || !localStream.current) return;
+      const peerId = payload.senderId;
+      if (peerId === myUserId || !localStream.current) return;
       
-      const pc = createPeerConnection(payload.userId, payload.username);
+      const pc = createPeerConnection(peerId, payload.username);
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         wsManager.send('webrtc_offer', { 
-          targetUserId: payload.userId, 
+          targetUserId: peerId, 
           sdp: pc.localDescription 
         }, roomId);
       } catch (e) {
@@ -132,15 +140,16 @@ export function useVoice(roomId) {
 
     // Receive offer -> create answer
     const handleOffer = async (payload) => {
+      const peerId = payload.senderId;
       if (!localStream.current) return;
       
-      const pc = createPeerConnection(payload.userId, payload.username);
+      const pc = createPeerConnection(peerId, payload.username);
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         wsManager.send('webrtc_answer', { 
-          targetUserId: payload.userId, 
+          targetUserId: peerId, 
           sdp: pc.localDescription 
         }, roomId);
       } catch (e) {
@@ -150,7 +159,8 @@ export function useVoice(roomId) {
 
     // Receive answer -> set remote description
     const handleAnswer = async (payload) => {
-      const pc = peerConnections.current.get(payload.userId);
+      const peerId = payload.senderId;
+      const pc = peerConnections.current.get(peerId);
       if (pc) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
@@ -162,7 +172,8 @@ export function useVoice(roomId) {
 
     // Receive ICE candidate
     const handleIce = async (payload) => {
-      const pc = peerConnections.current.get(payload.userId);
+      const peerId = payload.senderId;
+      const pc = peerConnections.current.get(peerId);
       if (pc && payload.candidate) {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
@@ -174,12 +185,12 @@ export function useVoice(roomId) {
 
     // Someone muted/unmuted
     const handleMuteToggle = (payload) => {
-      updateParticipant(payload.userId, { isMuted: payload.isMuted });
+      updateParticipant(payload.senderId, { isMuted: payload.isMuted });
     };
 
     // Someone left voice
     const handleLeave = (payload) => {
-      removeParticipant(payload.userId);
+      removeParticipant(payload.senderId);
     };
 
     // Register WebRTC spec events from frontend.md Section 5.1
@@ -202,7 +213,7 @@ export function useVoice(roomId) {
   }, [roomId, myUserId, stopLocalStream, updateParticipant, removeParticipant]);
 
   // Create RTCPeerConnection helper
-  const createPeerConnection = (userId, username) => {
+  const createPeerConnection = (userId, customUsername) => {
     // If it already exists, use it
     if (peerConnections.current.has(userId)) {
       return peerConnections.current.get(userId);
@@ -211,9 +222,14 @@ export function useVoice(roomId) {
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnections.current.set(userId, pc);
 
+    // Try to get username from store to ensure it's not unknown
+    // We import useRoomStore on top of the file
+    const storeMember = useRoomStore.getState().members.find(m => m.userId === userId);
+    const resolvedUsername = customUsername || storeMember?.username || 'Unknown';
+
     // Initial participant state
     updateParticipant(userId, { 
-      username, 
+      username: resolvedUsername, 
       isMuted: false, 
       isSpeaking: false 
     });
@@ -234,8 +250,6 @@ export function useVoice(roomId) {
         }, roomId);
       }
     };
-
-    // Handle receiving remote stream
     pc.ontrack = (event) => {
       const remoteStream = event.streams[0];
       updateParticipant(userId, { stream: remoteStream });
