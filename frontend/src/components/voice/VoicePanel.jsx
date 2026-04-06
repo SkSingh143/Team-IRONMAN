@@ -53,9 +53,10 @@ export default function VoicePanel() {
   return (
     <div className="flex flex-col h-full bg-root overflow-hidden">
       {/* Audio tags */}
-      {participants.map((p, idx) => (
-        (p.stream && p.username !== undefined && idx !== 0) ? <AudioElement key={idx} stream={p.stream} isMuted={false} /> : null
-      ))}
+      {participants.map((p) => {
+        if (!p.stream || p.userId === user?._id || !p.username) return null;
+        return <AudioElement key={p.userId} stream={p.stream} isMuted={false} />;
+      })}
 
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-surface shrink-0">
@@ -130,16 +131,17 @@ export default function VoicePanel() {
             {participants.map((p, idx) => {
               const displayName = p.username || 'Unknown';
               const initials = displayName.slice(0, 2).toUpperCase();
+              const isMe = p.userId === user?._id;
               return (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                  key={idx} 
+                  key={p.userId} 
                   className={`rounded-3xl bg-surface border flex flex-col items-center justify-center p-5 relative transition-all ${p.isSpeaking ? 'border-primary shadow-[0_0_20px_rgba(108,99,255,0.3)]' : 'border-border'}`}
                   style={{ minHeight: '180px' }}
                 >
                   {/* Avatar with pulse */}
                   <div className="relative mb-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold z-10 relative ${idx === 0 ? 'bg-gradient-to-br from-primary to-accent' : 'bg-surface-elevated border-2 border-border'}`}>
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold z-10 relative ${isMe ? 'bg-gradient-to-br from-primary to-accent' : 'bg-surface-elevated border-2 border-border'}`}>
                       {initials}
                     </div>
                     {p.isSpeaking && (
@@ -150,7 +152,7 @@ export default function VoicePanel() {
                   {/* Name -- clearly visible */}
                   <div className="text-sm font-semibold text-white text-center w-full px-2 leading-tight" title={displayName}>
                     <span className="block truncate">{displayName}</span>
-                    {idx === 0 && <span className="text-xs text-primary font-medium mt-0.5 block">(You)</span>}
+                    {isMe && <span className="text-xs text-primary font-medium mt-0.5 block">(You)</span>}
                   </div>
 
                   {/* Muted indicator */}

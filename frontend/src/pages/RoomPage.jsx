@@ -208,20 +208,23 @@ export default function RoomPage() {
             </button>
           </div>
 
-          {/* Active Tab Content */}
-          <div className="flex-1 relative w-full h-full bg-root">
-            <div className={`w-full h-full ${activeTab === 'canvas' ? 'block' : 'hidden'}`}>
+          <div className="flex-1 relative w-full h-full bg-root overflow-hidden">
+            {/* Canvas */}
+            <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'canvas' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-[-1]'}`}>
               <Canvas />
               <Toolbar />
               <CursorOverlay />
             </div>
-            <div className={`w-full h-full ${activeTab === 'code' ? 'block' : 'hidden'}`}>
+            {/* Code */}
+            <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-[-1]'}`}>
               <CodePanel />
             </div>
-            <div className={`w-full h-full ${activeTab === 'poll' ? 'block' : 'hidden'}`}>
+            {/* Poll */}
+            <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'poll' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-[-1]'}`}>
               <PollPanel />
             </div>
-            <div className={`w-full h-full ${activeTab === 'voice' ? 'block' : 'hidden'}`}>
+            {/* Voice */}
+            <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'voice' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-[-1]'}`}>
               <VoicePanel />
             </div>
           </div>

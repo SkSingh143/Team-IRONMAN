@@ -34,7 +34,7 @@ export function useVoice(roomId) {
         if (v !== undefined) cleanData[k] = v;
       });
       
-      next.set(userId, { ...existing, ...cleanData });
+      next.set(userId, { ...existing, ...cleanData, userId });
       return next;
     });
   }, []);
@@ -68,6 +68,9 @@ export function useVoice(roomId) {
         isMuted: false, 
         username: myUsername 
       });
+      
+      // Monitor self speaking
+      setupAudioLevelMonitoring(myUserId, stream);
       
       setIsConnected(true);
       setStatus('connected');

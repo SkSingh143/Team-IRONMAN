@@ -60,12 +60,27 @@ exports.getRoom = async (req, res, next) => {
       return res.status(403).json({ error: 'You are banned from this room' });
     }
 
-    let isMember = room.members.find(m => m.userId && m.userId._id.toString() === req.userId);
+    // Filter out deleted users and deduplicate by user ID
+    const uniqueMembers = new Map();
+    for (const m of room.members) {
+      if (!m.userId) continue;
+      const idStr = m.userId._id ? m.userId._id.toString() : m.userId.toString();
+      if (!uniqueMembers.has(idStr)) {
+        uniqueMembers.set(idStr, m);
+      }
+    }
+    room.members = Array.from(uniqueMembers.values());
+
+    let isMember = room.members.find(m => m.userId && (m.userId._id ? m.userId._id.toString() : m.userId.toString()) === req.userId);
     if (!isMember) {
       room.members.push({ userId: req.userId, role: 'member', canParticipate: false });
-      await room.save();
-      await room.populate('members.userId', 'username email');
     }
+    
+    // Always save to persist the cleaned deduplicated array and new member
+    await room.save();
+    
+    // Ensure populated for response
+    await room.populate('members.userId', 'username email');
 
     const elementCount = await Element.countDocuments({ roomId: req.params.roomId, deleted: false });
 
