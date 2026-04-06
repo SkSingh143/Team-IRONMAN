@@ -62,6 +62,17 @@ export function useWebSocket(roomId) {
     // Code
     wsManager.on('code_update', ({ code, language }) => setCode(code, language));
 
+    // Permissions
+    wsManager.on('permissions_updated', ({ allowAllPermissions }) => {
+      useRoomStore.getState().setAllowAllPermissions(allowAllPermissions);
+    });
+    wsManager.on('member_permission_updated', ({ userId, canParticipate }) => {
+      useRoomStore.getState().updateMemberPermission(userId, canParticipate);
+    });
+    wsManager.on('permission_denied', ({ action }) => {
+      alert(`Action '${action}' denied. You need permission from an admin.`);
+    });
+
     return () => wsManager.disconnect();
   }, [roomId]);
 }

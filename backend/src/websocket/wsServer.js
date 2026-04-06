@@ -3,6 +3,10 @@ const url = require('url');
 const { verifyAccessToken } = require('../services/tokenService');
 const roomSessions = require('./roomSessions');
 
+const Room = require('../models/Room');
+const Element = require('../models/Element');
+const Poll = require('../models/Poll');
+
 // Handlers
 const { handleDraw, handleDeleteElement, handleClearCanvas } = require('./handlers/drawHandler');
 const { handleCursorMove } = require('./handlers/cursorHandler');
@@ -39,85 +43,143 @@ const initWS = (server) => {
     }
   });
 
-  wss.on('connection', (ws, request) => {
+  wss.on('connection', async (ws, request) => {
     const { userId, roomId } = request;
 
-    // Join room session
-    if (!roomSessions.has(roomId)) {
-      roomSessions.set(roomId, { clients: new Map() });
-    }
-    const room = roomSessions.get(roomId);
-    room.clients.set(ws, { userId });
+    try {
+      // 1. Validate Room & Permissions
+      const roomDoc = await Room.findOne({ roomId }).populate('members.userId', 'username');
+      if (!roomDoc) { ws.close(); return; }
 
-    // Broadcast user joined
-    const joinMsg = JSON.stringify({ type: 'user_joined', data: { userId } });
-    for (const clientWs of room.clients.keys()) {
-      if (clientWs !== ws && clientWs.readyState === 1) {
-        clientWs.send(joinMsg);
+      if (roomDoc.bannedUsers.includes(userId)) {
+        ws.close(); return;
       }
-    }
 
-    ws.on('message', async (messageBuffer) => {
-      try {
-        const messageStr = messageBuffer.toString();
-        const payload = JSON.parse(messageStr);
-        
-        // Dispatch based on payload type
-        switch (payload.type) {
-          case 'draw':
-            await handleDraw(ws, payload.data, roomId, userId);
-            break;
-          case 'delete_element':
-            await handleDeleteElement(ws, payload.data, roomId);
-            break;
-          case 'clear_canvas':
-            await handleClearCanvas(ws, payload.data, roomId, userId);
-            break;
-          case 'cursor_move':
-            handleCursorMove(ws, payload.data, roomId, userId);
-            break;
-          case 'code_share':
-            await handleCodeShare(ws, payload.data, roomId, userId);
-            break;
-          case 'poll_create':
-            await handlePollCreate(ws, payload.data, roomId, userId);
-            break;
-          case 'poll_vote':
-            await handlePollVote(ws, payload.data, roomId, userId);
-            break;
-          case 'webrtc_offer':
-          case 'webrtc_answer':
-          case 'webrtc_ice':
-          case 'voice_join':
-          case 'voice_leave':
-          case 'voice_mute_toggle':
-            handleVoiceSignal(ws, payload.type, payload.data, roomId, userId);
-            break;
-          default:
-            console.warn('Unknown message type:', payload.type);
+      const memberInfo = roomDoc.members.find(m => m.userId && m.userId._id.toString() === userId);
+      const role = memberInfo ? memberInfo.role : 'member';
+      const canParticipate = memberInfo ? memberInfo.canParticipate : false;
+      const username = memberInfo && memberInfo.userId ? memberInfo.userId.username : 'Unknown';
+
+      // 2. Register Session
+      if (!roomSessions.has(roomId)) {
+        roomSessions.set(roomId, { allowAllPermissions: roomDoc.allowAllPermissions, clients: new Map() });
+      }
+      const room = roomSessions.get(roomId);
+      room.clients.set(ws, { userId, username, role, canParticipate });
+
+      // 3. Dispatch Initial state snapshot
+      const elements = await Element.find({ roomId, deleted: false });
+      const polls = await Poll.find({ roomId });
+      
+      const snapshotMsg = JSON.stringify({
+        type: 'canvas_snapshot',
+        data: {
+          elements,
+          polls,
+          codeSnippet: roomDoc.codeSnippet,
+          members: roomDoc.members.map(m => ({
+            userId: m.userId._id,
+            username: m.userId.username,
+            role: m.role,
+            canParticipate: m.canParticipate
+          }))
         }
-      } catch (err) {
-        console.error('WS Message parsing/handling error:', err);
-      }
-    });
+      });
+      ws.send(snapshotMsg);
 
-    ws.on('close', () => {
-      if (roomSessions.has(roomId)) {
-        const room = roomSessions.get(roomId);
-        room.clients.delete(ws);
-        
-        // Clean up empty rooms memory
-        if (room.clients.size === 0) {
-          roomSessions.delete(roomId);
-        } else {
-          // Tell others user left (cursor cleanup)
-          const leaveMsg = JSON.stringify({ type: 'user_leave', data: { userId } });
-          for (const clientWs of room.clients.keys()) {
-            if (clientWs.readyState === 1) clientWs.send(leaveMsg);
+      // 4. Broadcast join
+      const joinMsg = JSON.stringify({ type: 'user_joined', data: { userId, username, role, canParticipate } });
+      for (const clientWs of room.clients.keys()) {
+        if (clientWs !== ws && clientWs.readyState === 1) {
+          clientWs.send(joinMsg); // Broadcast to existing clients
+        }
+      }
+
+      // 5. Message Handling
+      ws.on('message', async (messageBuffer) => {
+        try {
+          const messageStr = messageBuffer.toString();
+          const payload = JSON.parse(messageStr);
+          
+          // Permission Gate
+          const modifyingActions = [
+            'draw', 'delete_element', 'clear_canvas', 
+            'code_share', 
+            'poll_create', 
+            'voice_join', 'webrtc_offer', 'webrtc_answer', 'webrtc_ice', 'voice_mute_toggle'
+          ];
+
+          if (modifyingActions.includes(payload.type)) {
+            const clientData = room.clients.get(ws);
+            if (!clientData) return;
+            const hasPerm = clientData.role === 'admin' || clientData.canParticipate || room.allowAllPermissions;
+            if (!hasPerm) {
+              // Notify client it was denied so it can drop optimistic updates if needed
+              if (payload.type === 'draw' || payload.type === 'code_share') {
+                ws.send(JSON.stringify({ type: 'permission_denied', data: { action: payload.type } }));
+              }
+              return;
+            }
+          }
+          
+          switch (payload.type) {
+            case 'draw':
+              await handleDraw(ws, payload.data, roomId, userId);
+              break;
+            case 'delete_element':
+              await handleDeleteElement(ws, payload.data, roomId);
+              break;
+            case 'clear_canvas':
+              await handleClearCanvas(ws, payload.data, roomId, userId);
+              break;
+            case 'cursor_move':
+              handleCursorMove(ws, payload.data, roomId, userId);
+              break;
+            case 'code_share':
+              await handleCodeShare(ws, payload.data, roomId, userId);
+              break;
+            case 'poll_create':
+              await handlePollCreate(ws, payload.data, roomId, userId);
+              break;
+            case 'poll_vote':
+              await handlePollVote(ws, payload.data, roomId, userId);
+              break;
+            case 'webrtc_offer':
+            case 'webrtc_answer':
+            case 'webrtc_ice':
+            case 'voice_join':
+            case 'voice_leave':
+            case 'voice_mute_toggle':
+              handleVoiceSignal(ws, payload.type, payload.data, roomId, userId);
+              break;
+            default:
+              console.warn('Unknown message type:', payload.type);
+          }
+        } catch (err) {
+          console.error('WS Message parsing/handling error:', err);
+        }
+      });
+
+      ws.on('close', () => {
+        if (roomSessions.has(roomId)) {
+          const room = roomSessions.get(roomId);
+          room.clients.delete(ws);
+          
+          if (room.clients.size === 0) {
+            roomSessions.delete(roomId);
+          } else {
+            const leaveMsg = JSON.stringify({ type: 'user_leave', data: { userId } });
+            for (const clientWs of room.clients.keys()) {
+              if (clientWs.readyState === 1) clientWs.send(leaveMsg);
+            }
           }
         }
-      }
-    });
+      });
+
+    } catch (err) {
+      console.error('Error in WS Connection logic:', err);
+      ws.close();
+    }
   });
 };
 

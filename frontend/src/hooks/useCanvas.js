@@ -4,6 +4,7 @@ import useUIStore from '../store/uiStore';
 import useRoomStore from '../store/roomStore';
 import useAuthStore from '../store/authStore';
 import { wsManager } from '../utils/wsManager';
+import { drawStroke } from '../utils/canvasUtils';
 
 export function useCanvas(canvasRef) {
   const isDrawing = useRef(false);
@@ -36,41 +37,6 @@ export function useCanvas(canvasRef) {
     };
   }, [canvasRef]);
 
-  // Draw a single stroke on the canvas
-  const drawStroke = useCallback((ctx, stroke) => {
-    if (!stroke.points || stroke.points.length < 2) return;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.strokeStyle = stroke.tool === 'eraser' 
-      ? (stroke.theme === 'light' ? '#F8F9FA' : '#0B0D17') 
-      : stroke.color;
-    ctx.lineWidth = stroke.tool === 'eraser' ? stroke.lineWidth * 3 : stroke.lineWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = 'source-over';
-
-    const pts = stroke.points;
-    ctx.moveTo(pts[0][0], pts[0][1]);
-
-    if (pts.length === 2) {
-      ctx.lineTo(pts[1][0], pts[1][1]);
-    } else {
-      // Smooth curve through points
-      for (let i = 1; i < pts.length - 1; i++) {
-        const midX = (pts[i][0] + pts[i + 1][0]) / 2;
-        const midY = (pts[i][1] + pts[i + 1][1]) / 2;
-        ctx.quadraticCurveTo(pts[i][0], pts[i][1], midX, midY);
-      }
-      // Last point
-      const last = pts[pts.length - 1];
-      ctx.lineTo(last[0], last[1]);
-    }
-
-    ctx.stroke();
-    ctx.restore();
-  }, []);
-
   // Redraw all elements from store
   const redrawAll = useCallback(() => {
     const ctx = getCtx();
@@ -84,7 +50,7 @@ export function useCanvas(canvasRef) {
         drawStroke(ctx, el);
       }
     });
-  }, [elements, getCtx, canvasRef, drawStroke]);
+  }, [elements, getCtx, canvasRef]);
 
   // Redraw when elements change
   useEffect(() => {
@@ -133,7 +99,7 @@ export function useCanvas(canvasRef) {
     ctx.lineTo(to[0], to[1]);
     ctx.stroke();
     ctx.restore();
-  }, [activeTool, activeColor, lineWidth]);
+  }, [activeTool, activeColor, lineWidth, canvasTheme]);
 
   // --- Pointer Event Handlers ---
 
@@ -200,7 +166,7 @@ export function useCanvas(canvasRef) {
     wsManager.send('draw', element, roomId);
 
     currentPoints.current = [];
-  }, [activeColor, lineWidth, activeTool, roomId, addElement]);
+  }, [activeColor, lineWidth, activeTool, canvasTheme, roomId, addElement]);
 
   const onPointerLeave = useCallback(() => {
     if (isDrawing.current) {

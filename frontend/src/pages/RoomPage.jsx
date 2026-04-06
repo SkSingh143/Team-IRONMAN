@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import useRoomStore from '../store/roomStore';
 import useUIStore from '../store/uiStore';
-import { getRoom } from '../api/roomApi';
+import { getRoom, banUser, toggleAllPermissions, toggleMemberPermission } from '../api/roomApi';
 import { useToast } from '../components/common/Toast';
 import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/common/Navbar';
@@ -29,13 +29,15 @@ export default function RoomPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuthStore();
-  const { setRoom, setMembers, members, roomName, polls, clearRoom } = useRoomStore();
+  const { setRoom, setMembers, members, roomName, polls, clearRoom, allowAllPermissions } = useRoomStore();
   const { activeTab, setTab } = useUIStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const isAdmin = members.find(m => m.userId === user?._id)?.role === 'admin';
 
   // Load room metadata on mount
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function RoomPage() {
         setError(null);
         const { data } = await getRoom(roomId);
         if (cancelled) return;
-        setRoom(data.roomId, data.name);
+        setRoom(data.roomId, data.name, data.allowAllPermissions);
         setMembers(data.members || []);
       } catch (err) {
         if (cancelled) return;
@@ -76,6 +78,24 @@ export default function RoomPage() {
       setTimeout(() => setCopied(false), 2000);
     });
   }, [roomId, toast]);
+
+  const handleBan = async (mId) => {
+    if (!window.confirm("Ban this user from the room?")) return;
+    try {
+      await banUser(roomId, mId);
+      toast.success("User banned");
+    } catch(err) {
+      toast.error(err.response?.data?.error || "Failed to ban user");
+    }
+  };
+
+  const handleToggleMember = async (mId, currentPerm) => {
+    try {
+      await toggleMemberPermission(roomId, mId, !currentPerm);
+    } catch(err) {
+      toast.error(err.response?.data?.error || "Failed to update permission");
+    }
+  };
 
   if (loading) {
     return (
@@ -238,6 +258,23 @@ export default function RoomPage() {
                 </div>
 
                 <div className="p-5 flex-1 overflow-y-auto">
+                  {isAdmin && (
+                    <div className="mb-4 p-3 bg-surface border border-border rounded-lg flex items-center justify-between">
+                      <div className="text-xs font-semibold text-gray-300">Allow Global Participation</div>
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await toggleAllPermissions(roomId, !allowAllPermissions);
+                          } catch (e) { toast.error("Failed"); }
+                        }}
+                        className={`w-10 h-5 rounded-full relative transition-colors ${allowAllPermissions ? 'bg-primary' : 'bg-gray-600'}`}
+                        title="Give permission to ALL users"
+                      >
+                        <span className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${allowAllPermissions ? 'translate-x-5' : ''}`}></span>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Members</div>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold">{members.length}</span>
@@ -252,7 +289,7 @@ export default function RoomPage() {
                         const initials = (m.username || '??').slice(0, 2).toUpperCase();
                         return (
                           <div key={m.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface transition-colors group">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-dark to-primary flex items-center justify-center text-white text-xs font-bold shadow-sm relative">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-dark to-primary flex items-center justify-center text-white text-xs font-bold shadow-sm relative shrink-0">
                               {initials}
                               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-surface-elevated rounded-full"></span>
                             </div>
@@ -260,8 +297,28 @@ export default function RoomPage() {
                               <div className="text-sm font-medium text-gray-200 truncate group-hover:text-white transition-colors">
                                 {m.username} {isMe && <span className="text-primary text-xs ml-1">(You)</span>}
                               </div>
-                              {m.role === 'admin' && (
+                              {m.role === 'admin' ? (
                                 <div className="text-[10px] uppercase font-bold tracking-wider text-accent mt-0.5">{m.role}</div>
+                              ) : (
+                                isAdmin && !isMe && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <label className="flex items-center gap-1 cursor-pointer">
+                                      <input 
+                                        type="checkbox" 
+                                        checked={m.canParticipate || false} 
+                                        onChange={() => handleToggleMember(m.userId, m.canParticipate)} 
+                                        className="w-3 h-3 cursor-pointer accent-primary" 
+                                      />
+                                      <span className="text-[10px] text-gray-400">Permit</span>
+                                    </label>
+                                    <button 
+                                      onClick={() => handleBan(m.userId)} 
+                                      className="text-[10px] text-red-400 hover:bg-red-400/20 px-1.5 rounded transition"
+                                    >
+                                      Ban
+                                    </button>
+                                  </div>
+                                )
                               )}
                             </div>
                           </div>

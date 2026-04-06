@@ -14,7 +14,13 @@ export const getRoom = (roomId) => api.get(`/api/rooms/${roomId}`);
 // Returns: { message: 'Room deleted' }
 export const deleteRoom = (roomId) => api.delete(`/api/rooms/${roomId}`);
 
-// POST /api/rooms/:roomId/kick (admin only)
+// POST /api/rooms/:roomId/ban (admin only)
 // Body: { userId }
-// Returns: { message: 'User removed' }
-export const kickUser = (roomId, userId) => api.post(`/api/rooms/${roomId}/kick`, { userId });
+// Returns: { message: 'User banned' }
+export const banUser = (roomId, userId) => api.post(`/api/rooms/${roomId}/ban`, { userId });
+
+// PUT /api/rooms/:roomId/permissions
+export const toggleAllPermissions = (roomId, allowAllPermissions) => api.put(`/api/rooms/${roomId}/permissions`, { allowAllPermissions });
+
+// PUT /api/rooms/:roomId/member/:memberId/permission
+export const toggleMemberPermission = (roomId, memberId, canParticipate) => api.put(`/api/rooms/${roomId}/member/${memberId}/permission`, { canParticipate });

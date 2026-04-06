@@ -4,17 +4,22 @@ import { create } from 'zustand';
 const useRoomStore = create((set, get) => ({
   roomId: null,
   roomName: null,
-  members: [],          // [{ userId, username, role }]
+  allowAllPermissions: false,
+  members: [],          // [{ userId, username, role, canParticipate }]
   elements: [],         // drawing strokes — append only
   polls: [],            // active polls
   codeSnippet: '',      // shared code string
   codeLanguage: 'javascript',
 
-  setRoom: (roomId, roomName) => set({ roomId, roomName }),
+  setRoom: (roomId, roomName, allowAllPermissions = false) => set({ roomId, roomName, allowAllPermissions }),
+  setAllowAllPermissions: (allowAllPermissions) => set({ allowAllPermissions }),
   setMembers: (members) => set({ members }),
   addMember: (member) => set(s => ({ members: [...s.members, member] })),
   removeMember: (userId) => set(s => ({
     members: s.members.filter(m => m.userId !== userId)
+  })),
+  updateMemberPermission: (userId, canParticipate) => set(s => ({
+    members: s.members.map(m => m.userId === userId ? { ...m, canParticipate } : m)
   })),
 
   addElement: (el) => set(s => ({ elements: [...s.elements, el] })),

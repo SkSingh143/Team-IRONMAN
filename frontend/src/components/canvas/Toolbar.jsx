@@ -3,7 +3,8 @@ import useRoomStore from '../../store/roomStore';
 import useAuthStore from '../../store/authStore';
 import { wsManager } from '../../utils/wsManager';
 import { motion } from 'framer-motion';
-import { PenTool, Eraser, Undo, Moon, Sun, Trash2 } from 'lucide-react';
+import { PenTool, Eraser, Undo, Moon, Sun, Trash2, Download } from 'lucide-react';
+import { exportAsImage } from '../../utils/canvasUtils';
 
 const PRESET_COLORS = [
   '#FFFFFF', '#FF6B6B', '#FFA94D', '#FFD43B',
@@ -15,6 +16,7 @@ const SIZES = [2, 4, 6, 8, 12, 16];
 
 export default function Toolbar() {
   const { activeTool, activeColor, lineWidth, canvasTheme, setTool, setColor, setLineWidth, toggleTheme } = useUIStore();
+  const elements = useRoomStore(s => s.elements);
   const undoElement = useRoomStore(s => s.undoElement);
   const roomId = useRoomStore(s => s.roomId);
   const members = useRoomStore(s => s.members);
@@ -29,6 +31,10 @@ export default function Toolbar() {
     wsManager.send('clear_canvas', {}, roomId);
     // clear immediately locally
     useRoomStore.getState().setElements([]);
+  };
+
+  const handleExport = () => {
+    exportAsImage(elements, canvasTheme);
   };
 
   return (
@@ -65,6 +71,11 @@ export default function Toolbar() {
             onClick={handleUndo} 
             icon={<Undo className="w-5 h-5" />} 
             title="Undo"
+          />
+          <ToolBtn 
+            onClick={handleExport} 
+            icon={<Download className="w-5 h-5" />} 
+            title="Export as Image"
           />
           {isAdmin && (
             <ToolBtn 

@@ -92,11 +92,21 @@ exports.logout = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
     if (token) {
-      const decoded = tokenSvc.verifyRefreshToken(token).catch(() => null);
+      let decoded;
+      try {
+        decoded = tokenSvc.verifyRefreshToken(token);
+      } catch (err) {
+        decoded = null;
+      }
       if (decoded) await User.findByIdAndUpdate(decoded.userId, { refreshTokenHash: null });
     }
 
-    res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+    res.clearCookie('refreshToken', { 
+      path: '/api/auth/refresh',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    });
     res.json({ message: 'Logged out' });
   } catch (err) { next(err); }
 };

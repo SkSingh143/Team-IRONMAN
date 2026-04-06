@@ -4,15 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Home, Copy, Check, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from './Toast';
+import { logout as apiLogout } from '../../api/authApi';
 
 export default function Navbar({ roomName, roomId }) {
-  const { user, logout } = useAuthStore();
+  const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      await apiLogout();
+    } catch (err) {
+      console.error('Logout error', err);
+    }
+    clearAuth();
     navigate('/login');
   };
 
