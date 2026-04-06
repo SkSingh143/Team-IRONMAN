@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import useRoomStore from '../../store/roomStore';
+import useAuthStore from '../../store/authStore';
 import { useVoice } from '../../hooks/useVoice';
 import { useToast } from '../common/Toast';
 import { motion } from 'framer-motion';
-import { Mic, MicOff, PhoneCall, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, PhoneCall, PhoneOff, ShieldAlert } from 'lucide-react';
 
 function AudioElement({ stream, isMuted }) {
   const audioRef = useRef(null);
@@ -14,7 +15,8 @@ function AudioElement({ stream, isMuted }) {
 }
 
 export default function VoicePanel() {
-  const { roomId } = useRoomStore();
+  const { roomId, members, allowAllPermissions } = useRoomStore();
+  const user = useAuthStore(s => s.user);
   const toast = useToast();
   
   const {
@@ -27,7 +29,16 @@ export default function VoicePanel() {
     toggleMute
   } = useVoice(roomId);
 
+  // Check if current user has permission
+  const currentMember = members.find(m => m.userId === user?._id);
+  const isAdmin = currentMember?.role === 'admin';
+  const hasPermission = isAdmin || currentMember?.canParticipate || allowAllPermissions;
+
   const handleConnect = async () => {
+    if (!hasPermission) {
+      toast.error('Voice is disabled by admin. Request permission to join.');
+      return;
+    }
     if (isConnected) {
       stopVoice();
       toast.info('Disconnected from voice');
@@ -56,7 +67,7 @@ export default function VoicePanel() {
         </div>
 
         <div className="flex items-center gap-3">
-          {isConnected && (
+          {isConnected && hasPermission && (
             <button 
               onClick={toggleMute}
               className={`p-2.5 rounded-full transition-all ${isMuted ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-surface-elevated text-gray-300 hover:bg-surface-elevated/80'}`}
@@ -65,12 +76,37 @@ export default function VoicePanel() {
               {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
           )}
-          <button 
-            onClick={handleConnect}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg ${isConnected ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/20' : 'bg-primary hover:bg-primary-dark text-white shadow-primary/20'}`}
-          >
-            {isConnected ? <><PhoneOff className="w-4 h-4"/> Disconnect</> : <><PhoneCall className="w-4 h-4"/> Join Voice</>}
-          </button>
+
+          {/* Join/Disconnect button with permission awareness */}
+          <div className="relative group">
+            <button 
+              onClick={handleConnect}
+              disabled={!hasPermission && !isConnected}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg ${
+                !hasPermission && !isConnected
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed shadow-none'
+                  : isConnected 
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/20' 
+                    : 'bg-primary hover:bg-primary-dark text-white shadow-primary/20'
+              }`}
+            >
+              {!hasPermission && !isConnected ? (
+                <><ShieldAlert className="w-4 h-4" /> Disabled</>
+              ) : isConnected ? (
+                <><PhoneOff className="w-4 h-4"/> Disconnect</>
+              ) : (
+                <><PhoneCall className="w-4 h-4"/> Join Voice</>
+              )}
+            </button>
+            {/* Tooltip on hover when disabled */}
+            {!hasPermission && !isConnected && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-gray-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-border shadow-lg z-50">
+                <ShieldAlert className="w-3 h-3 inline mr-1 text-amber-400" />
+                Disabled by Admin
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 border-r border-b border-border rotate-45 -mt-1"></div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -82,16 +118,24 @@ export default function VoicePanel() {
               <Mic className="w-8 h-8 text-gray-400" />
             </div>
             <p>Join the voice channel to securely talk with your team using WebRTC.</p>
+            {!hasPermission && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400 text-sm">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>Voice is currently disabled by the admin.</span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {participants.map((p, idx) => {
-              const initials = (p.username || '??').slice(0, 2).toUpperCase();
+              const displayName = p.username || 'Unknown';
+              const initials = displayName.slice(0, 2).toUpperCase();
               return (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                   key={idx} 
-                  className={`aspect-square rounded-3xl bg-surface border flex flex-col items-center justify-center p-4 relative transition-all ${p.isSpeaking ? 'border-primary shadow-[0_0_20px_rgba(108,99,255,0.3)]' : 'border-border'}`}
+                  className={`rounded-3xl bg-surface border flex flex-col items-center justify-center p-5 relative transition-all ${p.isSpeaking ? 'border-primary shadow-[0_0_20px_rgba(108,99,255,0.3)]' : 'border-border'}`}
+                  style={{ minHeight: '180px' }}
                 >
                   {/* Avatar with pulse */}
                   <div className="relative mb-4">
@@ -103,13 +147,23 @@ export default function VoicePanel() {
                     )}
                   </div>
                   
-                  <div className="text-sm font-medium text-gray-200 text-center truncate w-full">
-                    {p.username} {idx === 0 && <span className="text-gray-500">(You)</span>}
+                  {/* Name -- clearly visible */}
+                  <div className="text-sm font-semibold text-white text-center w-full px-2 leading-tight" title={displayName}>
+                    <span className="block truncate">{displayName}</span>
+                    {idx === 0 && <span className="text-xs text-primary font-medium mt-0.5 block">(You)</span>}
                   </div>
 
+                  {/* Muted indicator */}
                   {p.isMuted && (
                     <div className="absolute top-3 right-3 p-1.5 bg-red-500/20 text-red-500 rounded-full">
                       <MicOff className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+
+                  {/* Speaking indicator label */}
+                  {p.isSpeaking && (
+                    <div className="mt-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                      Speaking
                     </div>
                   )}
                 </motion.div>

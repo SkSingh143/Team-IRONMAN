@@ -1,10 +1,12 @@
 // src/hooks/useWebSocket.js
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { wsManager } from '../utils/wsManager';
 import useRoomStore from '../store/roomStore';
 import useUIStore from '../store/uiStore';
 
 export function useWebSocket(roomId) {
+  const navigate = useNavigate();
   const {
     addElement,
     removeElement,
@@ -44,6 +46,16 @@ export function useWebSocket(roomId) {
     wsManager.on('user_left', ({ userId }) => {
       removeMember(userId);
       removeCursor(userId);
+    });
+
+    // Ban events — instant removal
+    wsManager.on('user_banned', ({ userId }) => {
+      removeMember(userId);
+      removeCursor(userId);
+    });
+    wsManager.on('you_are_banned', () => {
+      alert('You have been banned from this room by the admin.');
+      navigate('/dashboard');
     });
 
     // Cursors

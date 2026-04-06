@@ -110,6 +110,23 @@ exports.banUser = async (req, res, next) => {
     }
     await room.save();
 
+    // Broadcast ban via WebSocket — kick banned user & notify everyone else
+    const roomSessions = require('../websocket/roomSessions');
+    if (roomSessions.has(room.roomId)) {
+      const rs = roomSessions.get(room.roomId);
+      const bannedMsg = JSON.stringify({ type: 'user_banned', data: { userId: req.body.userId } });
+      for (const [clientWs, clientData] of rs.clients.entries()) {
+        if (clientData.userId === req.body.userId) {
+          // Send banned notification then close the connection
+          clientWs.send(JSON.stringify({ type: 'you_are_banned', data: { message: 'You have been banned from this room.' } }));
+          clientWs.close();
+          rs.clients.delete(clientWs);
+        } else if (clientWs.readyState === 1) {
+          clientWs.send(bannedMsg);
+        }
+      }
+    }
+
     res.json({ message: 'User banned' });
   } catch (err) { next(err); }
 };

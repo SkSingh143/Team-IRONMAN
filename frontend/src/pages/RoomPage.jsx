@@ -15,7 +15,7 @@ import CodePanel from '../components/code/CodePanel';
 import PollPanel from '../components/poll/PollPanel';
 import VoicePanel from '../components/voice/VoicePanel';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, Code, BarChart2, Mic, Copy, Check, Users, ChevronRight, Menu } from 'lucide-react';
+import { PenTool, Code, BarChart2, Mic, Copy, Check, Users, ChevronRight, Menu, ShieldAlert } from 'lucide-react';
 
 const tabs = [
   { key: 'canvas', label: 'Canvas', icon: PenTool },
@@ -38,6 +38,8 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
 
   const isAdmin = members.find(m => m.userId === user?._id)?.role === 'admin';
+  const currentMember = members.find(m => m.userId === user?._id);
+  const hasPermission = isAdmin || currentMember?.canParticipate || allowAllPermissions;
 
   // Load room metadata on mount
   useEffect(() => {
@@ -83,7 +85,9 @@ export default function RoomPage() {
     if (!window.confirm("Ban this user from the room?")) return;
     try {
       await banUser(roomId, mId);
-      toast.success("User banned");
+      // Instantly remove from local state
+      useRoomStore.getState().removeMember(mId);
+      toast.success("User banned and removed");
     } catch(err) {
       toast.error(err.response?.data?.error || "Failed to ban user");
     }
@@ -137,16 +141,22 @@ export default function RoomPage() {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
+            const isRestricted = !hasPermission && ['canvas', 'code', 'voice'].includes(tab.key);
             return (
               <div key={tab.key} className="relative group w-full px-3">
                 <button
                   onClick={() => setTab(tab.key)}
-                  title={tab.label}
+                  title={isRestricted ? `${tab.label} — Disabled by Admin` : tab.label}
                   className={`relative w-full aspect-square flex items-center justify-center rounded-2xl transition-all ${isActive ? 'bg-primary/10 text-primary shadow-inner shadow-primary/20' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
                 >
-                  <Icon className={`w-6 h-6 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+                  <Icon className={`w-6 h-6 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform ${isRestricted ? 'opacity-50' : ''}`} />
                   {tab.key === 'poll' && polls.length > 0 && (
                     <span className="absolute top-2 right-2 w-3 h-3 bg-accent rounded-full border-2 border-surface"></span>
+                  )}
+                  {isRestricted && (
+                    <span className="absolute bottom-1 right-1 w-4 h-4 bg-amber-500/20 rounded-full flex items-center justify-center">
+                      <ShieldAlert className="w-2.5 h-2.5 text-amber-400" />
+                    </span>
                   )}
                 </button>
               </div>

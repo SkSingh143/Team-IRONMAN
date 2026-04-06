@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useRoomStore from '../../store/roomStore';
+import useAuthStore from '../../store/authStore';
 import { wsManager } from '../../utils/wsManager';
 import { motion } from 'framer-motion';
-import { Code, Share, Save } from 'lucide-react';
+import { Code, Share, Save, ShieldAlert } from 'lucide-react';
 
 const LANGUAGES = [
   { value: 'text', label: 'Plain Text' },
@@ -19,12 +20,18 @@ const LANGUAGES = [
 ];
 
 export default function CodePanel() {
-  const { codeSnippet, codeLanguage, roomId } = useRoomStore();
+  const { codeSnippet, codeLanguage, roomId, members, allowAllPermissions } = useRoomStore();
+  const user = useAuthStore(s => s.user);
   const [localCode, setLocalCode] = useState(codeSnippet || '');
   const [language, setLanguage] = useState(codeLanguage || 'text');
   const [isSynced, setIsSynced] = useState(true);
   const textareaRef = useRef(null);
   const lineNumbersRef = useRef(null);
+
+  // Permission check
+  const currentMember = members.find(m => m.userId === user?._id);
+  const isAdmin = currentMember?.role === 'admin';
+  const hasPermission = isAdmin || currentMember?.canParticipate || allowAllPermissions;
 
   useEffect(() => {
     setLocalCode(codeSnippet || '');
@@ -98,18 +105,33 @@ export default function CodePanel() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <span className={`w-2 h-2 rounded-full ${isSynced ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-            {isSynced ? 'Synced' : 'Editing…'}
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={isSynced}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isSynced ? 'bg-surface-elevated text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5'}`}
-          >
-            <Share className="w-4 h-4" />
-            Share (Ctrl+S)
-          </button>
+          {hasPermission ? (
+            <>
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <span className={`w-2 h-2 rounded-full ${isSynced ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                {isSynced ? 'Synced' : 'Editing…'}
+              </div>
+              <button
+                onClick={handleSave}
+                disabled={isSynced}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isSynced ? 'bg-surface-elevated text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5'}`}
+              >
+                <Share className="w-4 h-4" />
+                Share (Ctrl+S)
+              </button>
+            </>
+          ) : (
+            <div className="relative group">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-700/50 rounded-lg text-gray-500 text-sm font-bold cursor-not-allowed">
+                <ShieldAlert className="w-4 h-4" />
+                Sharing Disabled
+              </div>
+              <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-800 text-gray-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-border shadow-lg z-50">
+                <ShieldAlert className="w-3 h-3 inline mr-1 text-amber-400" />
+                Disabled by Admin
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -124,12 +146,13 @@ export default function CodePanel() {
         <textarea
           ref={textareaRef}
           value={localCode}
-          onChange={handleCodeChange}
+          onChange={hasPermission ? handleCodeChange : undefined}
           onScroll={handleScroll}
-          onKeyDown={handleKeyDown}
-          placeholder="Paste or type code here…&#10;&#10;Press Ctrl+S to share with the room."
+          onKeyDown={hasPermission ? handleKeyDown : undefined}
+          readOnly={!hasPermission}
+          placeholder={hasPermission ? "Paste or type code here…\n\nPress Ctrl+S to share with the room." : "View-only mode. Ask admin for permission to edit."}
           spellCheck={false}
-          className="w-full h-full p-4 pl-16 bg-root text-gray-300 font-mono text-[13px] leading-7 outline-none resize-none whitespace-pre overflow-x-auto"
+          className={`w-full h-full p-4 pl-16 bg-root font-mono text-[13px] leading-7 outline-none resize-none whitespace-pre overflow-x-auto ${hasPermission ? 'text-gray-300' : 'text-gray-500 cursor-not-allowed'}`}
         />
       </div>
 
@@ -140,7 +163,7 @@ export default function CodePanel() {
           <span className="font-mono">{localCode.length} chars</span>
           <span>{lineCount} lines</span>
         </div>
-        <div>Last writer wins</div>
+        <div>{hasPermission ? 'Last writer wins' : '🔒 Read-only mode'}</div>
       </footer>
     </div>
   );

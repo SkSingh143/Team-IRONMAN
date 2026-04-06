@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Home, Copy, Check, Users } from 'lucide-react';
+import { LogOut, Home, Copy, Check, Users, Coins } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from './Toast';
 import { logout as apiLogout } from '../../api/authApi';
@@ -62,6 +62,15 @@ export default function Navbar({ roomName, roomId }) {
       </div>
 
       <div className="flex items-center gap-6">
+        {/* Tokens link — always visible */}
+        <Link 
+          to="/pricing" 
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl text-amber-400 text-sm font-bold transition-all hover:-translate-y-0.5 group"
+        >
+          <Coins className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">Tokens</span>
+        </Link>
+
         {roomId && (
           <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-semibold mr-1">
             <Home className="w-4 h-4" />
