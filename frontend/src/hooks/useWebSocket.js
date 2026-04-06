@@ -44,10 +44,12 @@ export function useWebSocket(roomId) {
 
     // Users
     wsManager.on('user_joined', (member) => addMember(member));
-    wsManager.on('user_left', ({ userId }) => {
+    const handleUserLeft = ({ userId }) => {
       removeMember(userId);
       removeCursor(userId);
-    });
+    };
+    wsManager.on('user_left', handleUserLeft);
+    wsManager.on('user_leave', handleUserLeft);
 
     // Ban events — instant removal
     wsManager.on('user_banned', ({ userId }) => {

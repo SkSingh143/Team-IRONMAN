@@ -3,6 +3,8 @@ const Room = require('../models/Room');
 const Element = require('../models/Element');
 const Poll = require('../models/Poll');
 
+const normalizeRoomId = (roomId) => String(roomId || '').trim().toUpperCase();
+
 // Helper for exact 5-char ID: 3 digits, 2 letters
 const generateRoomId = () => {
   const digits = '0123456789';
@@ -51,7 +53,8 @@ exports.getHistory = async (req, res, next) => {
 // GET /api/rooms/:roomId
 exports.getRoom = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId })
+    const roomId = normalizeRoomId(req.params.roomId);
+    const room = await Room.findOne({ roomId })
       .populate('members.userId', 'username email');
 
     if (!room) return res.status(404).json({ error: 'Room not found' });
@@ -82,7 +85,7 @@ exports.getRoom = async (req, res, next) => {
     // Ensure populated for response
     await room.populate('members.userId', 'username email');
 
-    const elementCount = await Element.countDocuments({ roomId: req.params.roomId, deleted: false });
+    const elementCount = await Element.countDocuments({ roomId, deleted: false });
 
     const members = room.members.map(m => ({
       userId: m.userId._id, 
@@ -105,15 +108,16 @@ exports.getRoom = async (req, res, next) => {
 // DELETE /api/rooms/:roomId (admin only)
 exports.deleteRoom = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
+    const roomId = normalizeRoomId(req.params.roomId);
+    const room = await Room.findOne({ roomId });
     if (!room) return res.status(404).json({ error: 'Room not found' });
 
     if (room.adminId.toString() !== req.userId) return res.status(403).json({ error: 'Admin only' });
 
     await Promise.all([
-      Room.deleteOne({ roomId: req.params.roomId }),
-      Element.deleteMany({ roomId: req.params.roomId }),
-      Poll.deleteMany({ roomId: req.params.roomId }),
+      Room.deleteOne({ roomId }),
+      Element.deleteMany({ roomId }),
+      Poll.deleteMany({ roomId }),
     ]);
 
     res.json({ message: 'Room deleted' });
@@ -123,7 +127,8 @@ exports.deleteRoom = async (req, res, next) => {
 // POST /api/rooms/:roomId/ban (admin only)
 exports.banUser = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
+    const roomId = normalizeRoomId(req.params.roomId);
+    const room = await Room.findOne({ roomId });
     if (!room) return res.status(404).json({ error: 'Room not found' });
 
     if (room.adminId.toString() !== req.userId) return res.status(403).json({ error: 'Admin only' });
@@ -159,7 +164,8 @@ exports.banUser = async (req, res, next) => {
 // PUT /api/rooms/:roomId/permissions (admin only)
 exports.toggleAllPermissions = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
+    const roomId = normalizeRoomId(req.params.roomId);
+    const room = await Room.findOne({ roomId });
     if (!room) return res.status(404).json({ error: 'Room not found' });
     
     if (room.adminId.toString() !== req.userId) return res.status(403).json({ error: 'Admin only' });
@@ -183,7 +189,8 @@ exports.toggleAllPermissions = async (req, res, next) => {
 // PUT /api/rooms/:roomId/member/:memberId/permission (admin only)
 exports.toggleMemberPermission = async (req, res, next) => {
   try {
-    const room = await Room.findOne({ roomId: req.params.roomId });
+    const roomId = normalizeRoomId(req.params.roomId);
+    const room = await Room.findOne({ roomId });
     if (!room) return res.status(404).json({ error: 'Room not found' });
     
     if (room.adminId.toString() !== req.userId) return res.status(403).json({ error: 'Admin only' });

@@ -14,6 +14,8 @@ const { handleCodeShare } = require('./handlers/codeHandler');
 const { handlePollCreate, handlePollVote, handlePollDelete } = require('./handlers/pollHandler');
 const { handleVoiceSignal } = require('./handlers/voiceHandler');
 
+const normalizeRoomId = (roomId) => String(roomId || '').trim().toUpperCase();
+
 const initWS = (server) => {
   const wss = new WebSocketServer({ noServer: true });
 
@@ -21,7 +23,7 @@ const initWS = (server) => {
     try {
       const parsedUrl = url.parse(request.url, true);
       const token = parsedUrl.query.token;
-      const roomId = parsedUrl.query.roomId;
+      const roomId = normalizeRoomId(parsedUrl.query.roomId);
 
       if (!token || !roomId) {
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
@@ -62,10 +64,15 @@ const initWS = (server) => {
 
       // 2. Register Session
       if (!roomSessions.has(roomId)) {
-        roomSessions.set(roomId, { allowAllPermissions: roomDoc.allowAllPermissions, clients: new Map() });
+        roomSessions.set(roomId, {
+          allowAllPermissions: roomDoc.allowAllPermissions,
+          clients: new Map(),
+          voiceParticipants: new Map(),
+        });
       }
       const room = roomSessions.get(roomId);
-      room.clients.set(ws, { userId, username, role, canParticipate });
+      if (!room.voiceParticipants) room.voiceParticipants = new Map();
+      room.clients.set(ws, { userId, username, role, canParticipate, inVoice: false, isMuted: false });
 
       // 3. Dispatch Initial state snapshot
       const elements = await Element.find({ roomId, deleted: false });
@@ -77,6 +84,7 @@ const initWS = (server) => {
           elements,
           polls,
           codeSnippet: roomDoc.codeSnippet,
+          codeLanguage: roomDoc.codeLanguage,
           members: roomDoc.members.map(m => ({
             userId: m.userId._id,
             username: m.userId.username,
@@ -166,6 +174,14 @@ const initWS = (server) => {
       ws.on('close', () => {
         if (roomSessions.has(roomId)) {
           const room = roomSessions.get(roomId);
+          const clientData = room.clients.get(ws);
+          if (clientData?.inVoice) {
+            room.voiceParticipants.delete(userId);
+            const voiceLeaveMsg = JSON.stringify({ type: 'voice_leave', data: { senderId: userId } });
+            for (const [clientWs] of room.clients.entries()) {
+              if (clientWs !== ws && clientWs.readyState === 1) clientWs.send(voiceLeaveMsg);
+            }
+          }
           room.clients.delete(ws);
           
           if (room.clients.size === 0) {

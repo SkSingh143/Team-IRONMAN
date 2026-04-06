@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { wsManager } from '../utils/wsManager';
 import useAuthStore from '../store/authStore';
+import useRoomStore from '../store/roomStore';
 
 export function useVoice(roomId) {
   const [isConnected, setIsConnected] = useState(false);
@@ -56,10 +57,12 @@ export function useVoice(roomId) {
 
   // Initialize local audio stream
   const startLocalStream = async () => {
+    if (localStream.current) return true;
     try {
       setStatus('connecting');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       localStream.current = stream;
+      setIsMuted(false);
       
       // Add self to participants for UI
       updateParticipant(myUserId, { 
@@ -99,6 +102,7 @@ export function useVoice(roomId) {
     
     setParticipants(new Map());
     setIsConnected(false);
+    setIsMuted(false);
     setStatus('disconnected');
     
     if (wsManager.isConnected) {
@@ -128,8 +132,9 @@ export function useVoice(roomId) {
       const peerId = payload.senderId;
       if (peerId === myUserId || !localStream.current) return;
       
-      const pc = createPeerConnection(peerId, payload.username);
       try {
+        updateParticipant(peerId, { username: payload.username, isMuted: !!payload.isMuted });
+        const pc = createPeerConnection(peerId, payload.username);
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         wsManager.send('webrtc_offer', { 
@@ -147,8 +152,9 @@ export function useVoice(roomId) {
       const peerId = payload.senderId;
       if (!localStream.current) return;
       
-      const pc = createPeerConnection(peerId, payload.username);
       try {
+        updateParticipant(peerId, { username: payload.username, isMuted: !!payload.isMuted });
+        const pc = createPeerConnection(peerId, payload.username);
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
         
         // Process queued ICE candidates
@@ -215,6 +221,18 @@ export function useVoice(roomId) {
       updateParticipant(payload.senderId, { isMuted: payload.isMuted });
     };
 
+    const handleVoiceState = (payload) => {
+      const activeParticipants = payload?.participants || [];
+      activeParticipants.forEach((participant) => {
+        if (!participant?.userId || participant.userId === myUserId) return;
+        updateParticipant(participant.userId, {
+          username: participant.username,
+          isMuted: !!participant.isMuted,
+          isSpeaking: false,
+        });
+      });
+    };
+
     // Someone left voice
     const handleLeave = (payload) => {
       removeParticipant(payload.senderId);
@@ -222,6 +240,7 @@ export function useVoice(roomId) {
 
     // Register WebRTC spec events from frontend.md Section 5.1
     wsManager.on('voice_join', handleJoin);
+    wsManager.on('voice_state', handleVoiceState);
     wsManager.on('webrtc_offer', handleOffer);
     wsManager.on('webrtc_answer', handleAnswer);
     wsManager.on('webrtc_ice', handleIce);
@@ -230,6 +249,7 @@ export function useVoice(roomId) {
 
     return () => {
       wsManager.off('voice_join', handleJoin);
+      wsManager.off('voice_state', handleVoiceState);
       wsManager.off('webrtc_offer', handleOffer);
       wsManager.off('webrtc_answer', handleAnswer);
       wsManager.off('webrtc_ice', handleIce);

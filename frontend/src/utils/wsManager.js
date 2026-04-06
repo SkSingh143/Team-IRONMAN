@@ -17,14 +17,15 @@ class WSManager {
       this.ws.close();
     }
 
-    this._roomId = roomId;
+    const normalizedRoomId = String(roomId || '').trim().toUpperCase();
+    this._roomId = normalizedRoomId;
     const token = useAuthStore.getState().accessToken;
-    const url = `${import.meta.env.VITE_WS_URL}?token=${token}&roomId=${roomId}`;
+    const url = `${import.meta.env.VITE_WS_URL}?token=${token}&roomId=${normalizedRoomId}`;
 
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      console.log('[WS] Connected to room:', roomId);
+      console.log('[WS] Connected to room:', normalizedRoomId);
       this.reconnectAttempts = 0;
       // Notify listeners
       if (this.listeners['_connected']) {
@@ -55,7 +56,7 @@ class WSManager {
         console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnect})`);
         setTimeout(() => {
           this.reconnectAttempts++;
-          this.connect(roomId);
+          this.connect(normalizedRoomId);
         }, delay);
       } else {
         console.log('[WS] Max reconnect attempts reached');

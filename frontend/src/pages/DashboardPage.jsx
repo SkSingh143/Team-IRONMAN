@@ -55,11 +55,12 @@ export default function DashboardPage() {
 
   const handleJoinRoom = (e) => {
     e.preventDefault();
-    if (!joinRoomId.trim()) {
+    const normalizedRoomId = joinRoomId.trim().toUpperCase();
+    if (!normalizedRoomId) {
       toast.warning('Please enter a Room ID');
       return;
     }
-    navigate(`/room/${joinRoomId.trim()}`);
+    navigate(`/room/${normalizedRoomId}`);
   };
 
   return (
@@ -195,7 +196,8 @@ export default function DashboardPage() {
                       className="w-full px-4 py-3.5 bg-surface text-sm border border-border rounded-2xl text-main placeholder-muted font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all uppercase shadow-inner"
                       placeholder="Enter the 5-Character code"
                       value={joinRoomId}
-                      onChange={(e) => setJoinRoomId(e.target.value)}
+                      onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                      maxLength={5}
                       autoFocus
                     />
                   </div>
