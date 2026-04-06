@@ -2,14 +2,14 @@ const roomSessions = require('../roomSessions');
 const Room = require('../../models/Room');
 
 const handleCodeShare = async (ws, data, roomId, userId) => {
-  const { codeSnippet, codeLanguage } = data;
+  const { code, language } = data;
 
   // Broadcast to other clients immediately
   const room = roomSessions.get(roomId);
   if (room) {
     const message = JSON.stringify({
-      type: 'code_share',
-      data: { codeSnippet, codeLanguage, userId }
+      type: 'code_update',
+      data: { code, language, userId }
     });
 
     for (const [clientWs, clientData] of room.clients.entries()) {
@@ -22,8 +22,8 @@ const handleCodeShare = async (ws, data, roomId, userId) => {
   // Persist code in DB asynchronously
   try {
     const updatePayload = {};
-    if (codeSnippet !== undefined) updatePayload.codeSnippet = codeSnippet;
-    if (codeLanguage !== undefined) updatePayload.codeLanguage = codeLanguage;
+    if (code !== undefined) updatePayload.codeSnippet = code;
+    if (language !== undefined) updatePayload.codeLanguage = language;
 
     if (Object.keys(updatePayload).length > 0) {
       await Room.findOneAndUpdate({ roomId }, updatePayload);

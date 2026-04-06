@@ -4,7 +4,7 @@ const { verifyAccessToken } = require('../services/tokenService');
 const roomSessions = require('./roomSessions');
 
 // Handlers
-const { handleDraw, handleDeleteElement } = require('./handlers/drawHandler');
+const { handleDraw, handleDeleteElement, handleClearCanvas } = require('./handlers/drawHandler');
 const { handleCursorMove } = require('./handlers/cursorHandler');
 const { handleCodeShare } = require('./handlers/codeHandler');
 const { handlePollCreate, handlePollVote } = require('./handlers/pollHandler');
@@ -49,8 +49,13 @@ const initWS = (server) => {
     const room = roomSessions.get(roomId);
     room.clients.set(ws, { userId });
 
-    // Broadcast user joined (optional, good for live participant list)
-    // omit if frontend doesn't need it or use a separate event.
+    // Broadcast user joined
+    const joinMsg = JSON.stringify({ type: 'user_joined', data: { userId } });
+    for (const clientWs of room.clients.keys()) {
+      if (clientWs !== ws && clientWs.readyState === 1) {
+        clientWs.send(joinMsg);
+      }
+    }
 
     ws.on('message', async (messageBuffer) => {
       try {
@@ -65,6 +70,9 @@ const initWS = (server) => {
           case 'delete_element':
             await handleDeleteElement(ws, payload.data, roomId);
             break;
+          case 'clear_canvas':
+            await handleClearCanvas(ws, payload.data, roomId, userId);
+            break;
           case 'cursor_move':
             handleCursorMove(ws, payload.data, roomId, userId);
             break;
@@ -77,8 +85,13 @@ const initWS = (server) => {
           case 'poll_vote':
             await handlePollVote(ws, payload.data, roomId, userId);
             break;
-          case 'voice_signal':
-            handleVoiceSignal(ws, payload.data, roomId, userId);
+          case 'webrtc_offer':
+          case 'webrtc_answer':
+          case 'webrtc_ice':
+          case 'voice_join':
+          case 'voice_leave':
+          case 'voice_mute_toggle':
+            handleVoiceSignal(ws, payload.type, payload.data, roomId, userId);
             break;
           default:
             console.warn('Unknown message type:', payload.type);

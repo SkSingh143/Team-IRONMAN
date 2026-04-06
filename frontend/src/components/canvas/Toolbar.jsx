@@ -3,7 +3,7 @@ import useRoomStore from '../../store/roomStore';
 import useAuthStore from '../../store/authStore';
 import { wsManager } from '../../utils/wsManager';
 import { motion } from 'framer-motion';
-import { PenTool, Eraser, Undo, Moon, Sun } from 'lucide-react';
+import { PenTool, Eraser, Undo, Moon, Sun, Trash2 } from 'lucide-react';
 
 const PRESET_COLORS = [
   '#FFFFFF', '#FF6B6B', '#FFA94D', '#FFD43B',
@@ -16,10 +16,19 @@ const SIZES = [2, 4, 6, 8, 12, 16];
 export default function Toolbar() {
   const { activeTool, activeColor, lineWidth, canvasTheme, setTool, setColor, setLineWidth, toggleTheme } = useUIStore();
   const undoElement = useRoomStore(s => s.undoElement);
+  const roomId = useRoomStore(s => s.roomId);
+  const members = useRoomStore(s => s.members);
   const myUserId = useAuthStore(s => s.user?._id);
+  const isAdmin = members.find(m => m.userId === myUserId)?.role === 'admin';
 
   const handleUndo = () => {
     undoElement(myUserId, wsManager);
+  };
+
+  const handleClearCanvas = () => {
+    wsManager.send('clear_canvas', {}, roomId);
+    // clear immediately locally
+    useRoomStore.getState().setElements([]);
   };
 
   return (
@@ -57,6 +66,13 @@ export default function Toolbar() {
             icon={<Undo className="w-5 h-5" />} 
             title="Undo"
           />
+          {isAdmin && (
+            <ToolBtn 
+              onClick={handleClearCanvas} 
+              icon={<Trash2 className="w-5 h-5 text-red-500" />} 
+              title="Clear Canvas"
+            />
+          )}
         </div>
       </div>
 

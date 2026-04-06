@@ -72,4 +72,26 @@ const handleDeleteElement = async (ws, data, roomId) => {
   }
 };
 
-module.exports = { handleDraw, handleDeleteElement };
+const handleClearCanvas = async (ws, data, roomId, userId) => {
+  const room = roomSessions.get(roomId);
+  if (room) {
+    const message = JSON.stringify({
+      type: 'clear_canvas',
+      data: {}
+    });
+
+    for (const [clientWs, clientData] of room.clients.entries()) {
+      if (clientWs !== ws && clientWs.readyState === 1) {
+        clientWs.send(message);
+      }
+    }
+  }
+
+  try {
+    await Element.updateMany({ roomId }, { deleted: true });
+  } catch (err) {
+    console.error('Error soft deleting all elements:', err);
+  }
+};
+
+module.exports = { handleDraw, handleDeleteElement, handleClearCanvas };

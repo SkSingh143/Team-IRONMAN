@@ -37,6 +37,7 @@ export function useWebSocket(roomId) {
     // Drawing
     wsManager.on('draw', (el) => addElement(el));
     wsManager.on('element_deleted', ({ elementId }) => removeElement(elementId));
+    wsManager.on('clear_canvas', () => setElements([]));
 
     // Users
     wsManager.on('user_joined', (member) => addMember(member));
