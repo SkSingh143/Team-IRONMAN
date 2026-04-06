@@ -11,7 +11,9 @@ async function start() {
   const server = http.createServer(app);
 
   // WebSocket Server will be added in Phase 4
-  // initWS(server);
+  const { initWS } = require('./src/websocket/wsServer');
+  initWS(server);
+
 
   server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
