@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -14,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes will be added in Phase 2/3
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/rooms', roomRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
