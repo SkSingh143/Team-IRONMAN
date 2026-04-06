@@ -4,12 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/authApi';
 import useAuthStore from '../store/authStore';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const setAuth = useAuthStore(state => state.setAuth);
 
@@ -93,12 +94,20 @@ export default function LoginPage() {
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
-                  type="password"
-                  className="w-full pl-11 pr-4 py-3.5 bg-surface text-sm border border-border rounded-xl text-main placeholder-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors shadow-inner"
+                  type={showPassword ? 'text' : 'password'}
+                  className="w-full pl-11 pr-12 py-3.5 bg-surface text-sm border border-border rounded-xl text-main placeholder-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors shadow-inner"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(value => !value)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted hover:text-main transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
