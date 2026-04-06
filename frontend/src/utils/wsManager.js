@@ -34,9 +34,9 @@ class WSManager {
 
     this.ws.onmessage = (e) => {
       try {
-        const { event, payload } = JSON.parse(e.data);
-        if (this.listeners[event]) {
-          this.listeners[event].forEach(cb => cb(payload));
+        const { type, data } = JSON.parse(e.data);
+        if (this.listeners[type]) {
+          this.listeners[type].forEach(cb => cb(data));
         }
       } catch (err) {
         console.error('[WS] Parse error:', err);
@@ -73,7 +73,7 @@ class WSManager {
   send(event, payload, roomId) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       const userId = useAuthStore.getState().user?._id;
-      this.ws.send(JSON.stringify({ event, payload, roomId, userId }));
+      this.ws.send(JSON.stringify({ type: event, data: payload, roomId, userId }));
     }
   }
 

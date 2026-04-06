@@ -8,7 +8,10 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Permit ALL incoming network requests for local LAN testing
+    callback(null, true);
+  },
   credentials: true, // REQUIRED for cookies
 }));
 

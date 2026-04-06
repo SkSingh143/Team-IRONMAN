@@ -2,14 +2,14 @@ const Element = require('../../models/Element');
 const roomSessions = require('../roomSessions');
 
 const handleDraw = async (ws, data, roomId, userId) => {
-  const { elementId, payload } = data; // payload should contain points, color, lineWidth, tool etc.
+  const { elementId, points, color, lineWidth, tool, theme } = data;
 
   // Broadcast to other clients in the room immediately
   const room = roomSessions.get(roomId);
   if (room) {
     const message = JSON.stringify({
       type: 'draw',
-      data: { elementId, userId, payload }
+      data: data // Broadcast the full element back to friends so they can plot it
     });
 
     for (const [clientWs, clientData] of room.clients.entries()) {
@@ -24,8 +24,8 @@ const handleDraw = async (ws, data, roomId, userId) => {
     const existing = await Element.findOne({ elementId });
     if (existing) {
       // Append points if it's the same stroke
-      if (payload.points && payload.points.length > 0) {
-        existing.points.push(...payload.points);
+      if (points && points.length > 0) {
+        existing.points.push(...points);
         await existing.save();
       }
     } else {
@@ -35,10 +35,10 @@ const handleDraw = async (ws, data, roomId, userId) => {
         roomId,
         userId,
         type: 'stroke',
-        points: payload.points || [],
-        color: payload.color || '#000000',
-        lineWidth: payload.lineWidth || 2,
-        tool: payload.tool || 'pen'
+        points: points || [],
+        color: color || '#000000',
+        lineWidth: lineWidth || 2,
+        tool: tool || 'pen',
       });
     }
   } catch (err) {
