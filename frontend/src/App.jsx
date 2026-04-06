@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import RoomPage from './pages/RoomPage';
 import PrivateRoute from './components/common/PrivateRoute';
 import { ToastProvider } from './components/common/Toast';
 
@@ -26,17 +27,7 @@ export default function App() {
             path="/room/:roomId"
             element={
               <PrivateRoute>
-                {/* RoomPage placeholder — built in Phase 3 */}
-                <div style={{
-                  minHeight: '100vh',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: 'var(--font-size-lg)',
-                }}>
-                  Room workspace — coming in Phase 3
-                </div>
+                <RoomPage />
               </PrivateRoute>
             }
           />
