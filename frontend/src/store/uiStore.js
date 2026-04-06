@@ -7,6 +7,16 @@ const useUIStore = create((set) => ({
   lineWidth: 3,
   activeTab: 'canvas',      // 'canvas' | 'code' | 'poll' | 'voice'
   cursors: {},               // { userId: { x, y, username } }
+  toasts: [],
+
+  addToast: (type, title, message) => set(s => {
+    const id = Date.now().toString() + Math.random().toString(36).slice(2, 7);
+    return { toasts: [...s.toasts, { id, type, title, message }] };
+  }),
+
+  removeToast: (id) => set(s => ({
+    toasts: s.toasts.filter(t => t.id !== id)
+  })),
 
   setTool: (tool) => set({ activeTool: tool }),
   setColor: (color) => set({ activeColor: color }),

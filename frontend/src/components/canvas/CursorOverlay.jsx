@@ -1,9 +1,7 @@
-// src/components/canvas/CursorOverlay.jsx
 import useUIStore from '../../store/uiStore';
 import useAuthStore from '../../store/authStore';
-import '../../styles/canvas.css';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Color palette for different users' cursors
 const CURSOR_COLORS = [
   '#FF6B6B', '#FFA94D', '#FFD43B', '#69DB7C',
   '#4DABF7', '#9775FA', '#F783AC', '#20C997',
@@ -23,41 +21,50 @@ export default function CursorOverlay() {
   const myUserId = useAuthStore(s => s.user?._id);
 
   return (
-    <div className="cursor-overlay" id="cursor-overlay">
-      {Object.entries(cursors).map(([userId, data]) => {
-        // Skip own cursor
-        if (userId === myUserId) return null;
-
-        const color = getCursorColor(userId);
-        return (
-          <div
-            key={userId}
-            className="remote-cursor"
-            style={{
-              left: data.x + 'px',
-              top: data.y + 'px',
-            }}
-          >
-            {/* Cursor arrow */}
-            <svg
-              className="cursor-icon"
-              width="16"
-              height="20"
-              viewBox="0 0 16 20"
-              fill={color}
+    <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+      <AnimatePresence>
+        {Object.entries(cursors).map(([userId, data]) => {
+          if (userId === myUserId) return null;
+          const color = getCursorColor(userId);
+          
+          return (
+            <motion.div
+              key={userId}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                x: data.x,
+                y: data.y,
+                transition: { 
+                  type: "spring",
+                  stiffness: 800,
+                  damping: 35,
+                  mass: 0.5
+                }
+              }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="absolute pointer-events-none origin-top-left flex flex-col"
             >
-              <path d="M0 0L16 12H8L5.6 19.2L0 0Z" />
-            </svg>
-            {/* Name label */}
-            <span
-              className="cursor-label"
-              style={{ backgroundColor: color }}
-            >
-              {data.username || 'User'}
-            </span>
-          </div>
-        );
-      })}
+              <svg 
+                className="w-4 h-5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" 
+                viewBox="0 0 16 20" 
+                fill={color}
+              >
+                <path d="M0 0L16 12H8L5.6 19.2L0 0Z" />
+              </svg>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.1 } }}
+                className="absolute top-[18px] left-[10px] px-1.5 py-[2px] text-[10px] font-bold text-white rounded-md whitespace-nowrap shadow-md whitespace-pre"
+                style={{ backgroundColor: color }}
+              >
+                {data.username || 'User'}
+              </motion.span>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,10 +1,11 @@
-// src/components/code/CodePanel.jsx
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useRoomStore from '../../store/roomStore';
 import { wsManager } from '../../utils/wsManager';
-import '../../styles/code.css';
+import { motion } from 'framer-motion';
+import { Code, Share, Save } from 'lucide-react';
 
 const LANGUAGES = [
+  { value: 'text', label: 'Plain Text' },
   { value: 'javascript', label: 'JavaScript' },
   { value: 'python', label: 'Python' },
   { value: 'html', label: 'HTML' },
@@ -19,51 +20,31 @@ const LANGUAGES = [
 
 export default function CodePanel() {
   const { codeSnippet, codeLanguage, roomId } = useRoomStore();
-
   const [localCode, setLocalCode] = useState(codeSnippet || '');
-  const [language, setLanguage] = useState(codeLanguage || 'javascript');
+  const [language, setLanguage] = useState(codeLanguage || 'text');
   const [isSynced, setIsSynced] = useState(true);
-  const [lastAuthor, setLastAuthor] = useState(null);
   const textareaRef = useRef(null);
   const lineNumbersRef = useRef(null);
 
-  // Sync from store when remote update arrives
   useEffect(() => {
     setLocalCode(codeSnippet || '');
     setIsSynced(true);
   }, [codeSnippet]);
 
   useEffect(() => {
-    setLanguage(codeLanguage || 'javascript');
+    setLanguage(codeLanguage || 'text');
   }, [codeLanguage]);
 
-  // Track code_update for author info
-  useEffect(() => {
-    const handler = (payload) => {
-      if (payload.authorId) {
-        setLastAuthor(payload.authorId);
-      }
-    };
-    wsManager.on('code_update', handler);
-    return () => wsManager.off('code_update', handler);
-  }, []);
-
-  // Handle local code changes
   const handleCodeChange = (e) => {
     setLocalCode(e.target.value);
     setIsSynced(false);
   };
 
-  // Save / share code
   const handleSave = useCallback(() => {
-    wsManager.send('code_share', {
-      code: localCode,
-      language,
-    }, roomId);
+    wsManager.send('code_share', { code: localCode, language }, roomId);
     setIsSynced(true);
   }, [localCode, language, roomId]);
 
-  // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -75,14 +56,12 @@ export default function CodePanel() {
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave]);
 
-  // Sync textarea scroll with line numbers
   const handleScroll = () => {
     if (lineNumbersRef.current && textareaRef.current) {
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
     }
   };
 
-  // Handle tab key in textarea
   const handleKeyDown = (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -90,90 +69,79 @@ export default function CodePanel() {
       const newCode = localCode.substring(0, selectionStart) + '  ' + localCode.substring(selectionEnd);
       setLocalCode(newCode);
       setIsSynced(false);
-      // Restore cursor position
       requestAnimationFrame(() => {
         e.target.selectionStart = e.target.selectionEnd = selectionStart + 2;
       });
     }
   };
 
-  // Line count
   const lineCount = (localCode || '').split('\n').length;
   const lines = Array.from({ length: Math.max(lineCount, 20) }, (_, i) => i + 1);
 
   return (
-    <div className="code-panel" id="code-panel">
+    <div className="flex flex-col h-full bg-root">
       {/* Header */}
-      <div className="code-header">
-        <div className="code-header-left">
-          <div className="code-header-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
+      <header className="flex flex-wrap items-center justify-between p-4 border-b border-border bg-surface shrink-0 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-white font-semibold">
+            <Code className="w-5 h-5 text-primary" />
             Shared Code
           </div>
           <select
-            className="code-lang-select"
+            className="px-3 py-1.5 bg-surface-elevated border border-border rounded-lg text-sm font-medium text-gray-300 focus:outline-none focus:border-primary transition-colors appearance-none pr-8 cursor-pointer"
+            style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' fill=\'none\' stroke=\'%239B9DB8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M3 5l3 3 3-3\'/%3E%3C/svg%3E")', backgroundPosition: 'right 10px center', backgroundRepeat: 'no-repeat' }}
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            id="code-language-select"
+            onChange={(e) => { setLanguage(e.target.value); setIsSynced(false); }}
           >
-            {LANGUAGES.map(l => (
-              <option key={l.value} value={l.value}>{l.label}</option>
-            ))}
+            {LANGUAGES.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
         </div>
-        <div className="code-header-right">
-          <div className="code-status">
-            <span className={`dot ${isSynced ? 'synced' : 'editing'}`} />
+        
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span className={`w-2 h-2 rounded-full ${isSynced ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {isSynced ? 'Synced' : 'Editing…'}
           </div>
           <button
-            className="code-save-btn"
             onClick={handleSave}
             disabled={isSynced}
-            id="code-save-btn"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isSynced ? 'bg-surface-elevated text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5'}`}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <Share className="w-4 h-4" />
             Share (Ctrl+S)
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Editor */}
-      <div className="code-editor-wrapper">
-        <div className="code-line-numbers" ref={lineNumbersRef}>
-          {lines.map(n => (
-            <div key={n}>{n}</div>
-          ))}
+      {/* Editor Area */}
+      <div className="flex-1 relative overflow-hidden bg-root">
+        <div 
+          ref={lineNumbersRef}
+          className="absolute top-0 left-0 bottom-0 w-12 bg-surface border-r border-border py-4 px-2 text-right text-[13px] leading-7 font-mono text-gray-500 select-none overflow-hidden"
+        >
+          {lines.map(n => <div key={n} className="opacity-50">{n}</div>)}
         </div>
         <textarea
           ref={textareaRef}
-          className="code-editor"
           value={localCode}
           onChange={handleCodeChange}
           onScroll={handleScroll}
           onKeyDown={handleKeyDown}
           placeholder="Paste or type code here…&#10;&#10;Press Ctrl+S to share with the room."
           spellCheck={false}
-          id="code-textarea"
+          className="w-full h-full p-4 pl-16 bg-root text-gray-300 font-mono text-[13px] leading-7 outline-none resize-none whitespace-pre overflow-x-auto"
         />
       </div>
 
       {/* Footer */}
-      <div className="code-footer">
-        <div className="code-footer-left">
-          <span>{language}</span>
-          <span className="code-char-count">{localCode.length} chars</span>
+      <footer className="flex items-center justify-between px-4 py-2 bg-surface border-t border-border text-xs text-gray-500 shrink-0">
+        <div className="flex gap-4">
+          <span>{LANGUAGES.find(l=>l.value===language)?.label}</span>
+          <span className="font-mono">{localCode.length} chars</span>
           <span>{lineCount} lines</span>
         </div>
-        <div>
-          Last writer wins · Not collaborative cursor
-        </div>
-      </div>
+        <div>Last writer wins</div>
+      </footer>
     </div>
   );
 }

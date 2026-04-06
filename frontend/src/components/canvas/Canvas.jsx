@@ -1,7 +1,5 @@
-// src/components/canvas/Canvas.jsx
 import { useRef } from 'react';
 import { useCanvas } from '../../hooks/useCanvas';
-import '../../styles/canvas.css';
 
 export default function Canvas() {
   const canvasRef = useRef(null);
@@ -13,11 +11,10 @@ export default function Canvas() {
   } = useCanvas(canvasRef);
 
   return (
-    <div className="canvas-container" id="canvas-container">
+    <div className="relative w-full h-full overflow-hidden bg-root">
       <canvas
         ref={canvasRef}
-        className="drawing-canvas"
-        id="drawing-canvas"
+        className="block cursor-crosshair bg-root"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

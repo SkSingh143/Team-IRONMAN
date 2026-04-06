@@ -51,8 +51,12 @@ export function useWebSocket(roomId) {
     });
 
     // Polls
-    wsManager.on('poll_created', (poll) => addPoll(poll));
-    wsManager.on('poll_updated', (poll) => updatePoll(poll));
+    wsManager.on('poll_created', (payload) => {
+      if (payload?.poll) addPoll(payload.poll);
+    });
+    wsManager.on('poll_updated', (payload) => {
+      if (payload?.poll) updatePoll(payload.poll);
+    });
 
     // Code
     wsManager.on('code_update', ({ code, language }) => setCode(code, language));

@@ -1,110 +1,80 @@
-// src/components/common/Toast.jsx
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
-import '../../styles/toast.css';
-
-// ---- Icons ----
-const icons = {
-  success: (
-    <svg viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-    </svg>
-  ),
-  error: (
-    <svg viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-    </svg>
-  ),
-  warning: (
-    <svg viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-    </svg>
-  ),
-  info: (
-    <svg viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-    </svg>
-  ),
-};
-
-// ---- Toast Context ----
-const ToastContext = createContext(null);
+import { useEffect } from 'react';
+import useUIStore from '../../store/uiStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
-  return ctx;
+  const addToast = useUIStore((state) => state.addToast);
+  
+  return {
+    success: (message, title) => addToast('success', title, message),
+    error: (message, title) => addToast('error', title, message),
+    warning: (message, title) => addToast('warning', title, message),
+    info: (message, title) => addToast('info', title, message),
+  };
 }
 
-// ---- Single Toast Item ----
-function ToastItem({ id, type, title, message, duration = 4000, onRemove }) {
-  const [exiting, setExiting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setExiting(true);
-      setTimeout(() => onRemove(id), 300);
-    }, duration);
-    return () => clearTimeout(timer);
-  }, [id, duration, onRemove]);
-
-  const handleClose = () => {
-    setExiting(true);
-    setTimeout(() => onRemove(id), 300);
-  };
+export function ToastContainer() {
+  const { toasts, removeToast } = useUIStore();
 
   return (
-    <div className={`toast toast-${type} ${exiting ? 'exiting' : ''}`} role="alert">
-      <span className="toast-icon">{icons[type]}</span>
-      <div className="toast-content">
-        {title && <div className="toast-title">{title}</div>}
-        <div className="toast-message">{message}</div>
-      </div>
-      <button className="toast-close" onClick={handleClose} aria-label="Close notification">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
-          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
-      </button>
-      <div
-        className="toast-progress"
-        style={{ animationDuration: `${duration}ms` }}
-      />
+    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+      <AnimatePresence>
+        {toasts.map((toast) => (
+          <ToastCard key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ---- Toast Provider ----
-let toastIdCounter = 0;
+function ToastCard({ toast, onRemove }) {
+  useEffect(() => {
+    const timer = setTimeout(onRemove, 4000);
+    return () => clearTimeout(timer);
+  }, [onRemove]);
 
-export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+  const variants = {
+    initial: { opacity: 0, y: 20, scale: 0.95 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, x: 20, scale: 0.95, transition: { duration: 0.2 } },
+  };
 
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
+  const getStyleParams = () => {
+    switch (toast.type) {
+      case 'success':
+        return { icon: <CheckCircle className="text-emerald-400" />, border: 'border-emerald-500/30', bg: 'bg-emerald-500/10' };
+      case 'error':
+        return { icon: <AlertCircle className="text-red-400" />, border: 'border-red-500/30', bg: 'bg-red-500/10' };
+      case 'warning':
+        return { icon: <AlertTriangle className="text-amber-400" />, border: 'border-amber-500/30', bg: 'bg-amber-500/10' };
+      default:
+        return { icon: <Info className="text-blue-400" />, border: 'border-blue-500/30', bg: 'bg-blue-500/10' };
+    }
+  };
 
-  const addToast = useCallback((toast) => {
-    const id = ++toastIdCounter;
-    setToasts(prev => [...prev, { ...toast, id }]);
-    return id;
-  }, []);
-
-  const toast = useCallback({
-    success: (message, title) => addToast({ type: 'success', message, title }),
-    error: (message, title) => addToast({ type: 'error', message, title }),
-    warning: (message, title) => addToast({ type: 'warning', message, title }),
-    info: (message, title) => addToast({ type: 'info', message, title }),
-  }, [addToast]);
+  const params = getStyleParams();
 
   return (
-    <ToastContext.Provider value={toast}>
-      {children}
-      <div className="toast-container">
-        {toasts.map(t => (
-          <ToastItem key={t.id} {...t} onRemove={removeToast} />
-        ))}
+    <motion.div
+      variants={variants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      layout
+      className={`pointer-events-auto flex gap-3 p-4 w-[320px] rounded-xl shadow-xl backdrop-blur-md border ${params.border} ${params.bg} bg-surface/90`}
+    >
+      <div className="shrink-0 mt-0.5">{params.icon}</div>
+      <div className="flex-1 min-w-0 pr-2">
+        {toast.title && <div className="text-sm font-bold text-white mb-0.5">{toast.title}</div>}
+        <div className="text-sm text-gray-300 leading-tight break-words">{toast.message}</div>
       </div>
-    </ToastContext.Provider>
+      <button 
+        onClick={onRemove} 
+        className="shrink-0 p-1 text-gray-500 hover:text-white transition-colors self-start -mr-2 -mt-2 rounded-lg"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </motion.div>
   );
 }
-
-export default ToastProvider;

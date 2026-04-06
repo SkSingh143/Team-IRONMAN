@@ -23,6 +23,24 @@ const useRoomStore = create((set, get) => ({
     elements: s.elements.filter(e => e.elementId !== elementId)
   })),
 
+  undoElement: (userId, wsManager) => set(s => {
+    // Find the last stroke drawn by this user
+    for (let i = s.elements.length - 1; i >= 0; i--) {
+      if (s.elements[i].userId === userId) {
+        const elementIdToRemove = s.elements[i].elementId;
+        const newElements = [...s.elements];
+        newElements.splice(i, 1);
+        
+        // Broadcast delete event
+        if (wsManager && wsManager.isConnected) {
+          wsManager.send('delete_element', { elementId: elementIdToRemove }, s.roomId);
+        }
+        return { elements: newElements };
+      }
+    }
+    return s; // Nothing to undo
+  }),
+
   addPoll: (poll) => set(s => ({ polls: [...s.polls, poll] })),
   updatePoll: (updatedPoll) => set(s => ({
     polls: s.polls.map(p => p.pollId === updatedPoll.pollId ? updatedPoll : p)

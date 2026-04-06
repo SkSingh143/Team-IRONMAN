@@ -1,6 +1,9 @@
-// src/components/canvas/Toolbar.jsx
 import useUIStore from '../../store/uiStore';
-import '../../styles/canvas.css';
+import useRoomStore from '../../store/roomStore';
+import useAuthStore from '../../store/authStore';
+import { wsManager } from '../../utils/wsManager';
+import { motion } from 'framer-motion';
+import { PenTool, Eraser, Undo, Circle, MousePointer2 } from 'lucide-react';
 
 const PRESET_COLORS = [
   '#FFFFFF', '#FF6B6B', '#FFA94D', '#FFD43B',
@@ -8,100 +11,99 @@ const PRESET_COLORS = [
   '#868E96', '#20C997', '#339AF0', '#E64980',
 ];
 
-const SIZES = [1, 2, 3, 5, 8, 12];
+const SIZES = [2, 4, 6, 8, 12, 16];
 
 export default function Toolbar() {
   const { activeTool, activeColor, lineWidth, setTool, setColor, setLineWidth } = useUIStore();
+  const undoElement = useRoomStore(s => s.undoElement);
+  const myUserId = useAuthStore(s => s.user?._id);
+
+  const handleUndo = () => {
+    undoElement(myUserId, wsManager);
+  };
 
   return (
-    <div className="canvas-toolbar" id="canvas-toolbar">
-      {/* Tool Selection */}
-      <div className="toolbar-section">
-        <div className="toolbar-section-label">Tool</div>
-        <div className="tool-group">
-          <button
-            className={`tool-btn ${activeTool === 'pen' ? 'active' : ''}`}
-            onClick={() => setTool('pen')}
-            title="Pen"
-            id="tool-pen"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19l7-7 3 3-7 7-3-3z" />
-              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-              <path d="M2 2l7.586 7.586" />
-            </svg>
-          </button>
-          <button
-            className={`tool-btn ${activeTool === 'eraser' ? 'active' : ''}`}
-            onClick={() => setTool('eraser')}
-            title="Eraser"
-            id="tool-eraser"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L14.8 1.4c.8-.8 2-.8 2.8 0L21.2 5c.8.8.8 2 0 2.8L10 19" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Color Palette */}
-      <div className="toolbar-section">
-        <div className="toolbar-section-label">Color</div>
-        <div className="color-grid">
-          {PRESET_COLORS.map(c => (
-            <button
-              key={c}
-              className={`color-swatch ${activeColor === c ? 'active' : ''}`}
-              style={{ backgroundColor: c }}
-              onClick={() => setColor(c)}
-              title={c}
-            />
-          ))}
-        </div>
-        <div className="color-custom">
-          <input
-            type="color"
-            value={activeColor}
-            onChange={(e) => setColor(e.target.value)}
-            className="color-input"
-            title="Custom color"
-            id="custom-color-input"
+    <motion.div 
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-end gap-3 p-3 bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-20 max-w-[95vw] overflow-x-auto hide-scrollbar"
+    >
+      {/* Tools */}
+      <div className="flex flex-col gap-2 px-3 border-r border-border min-w-fit">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Tool</span>
+        <div className="flex gap-1">
+          <ToolBtn 
+            active={activeTool === 'pen'} 
+            onClick={() => setTool('pen')} 
+            icon={<PenTool className="w-5 h-5" />} 
           />
-          <span className="color-hex">{activeColor}</span>
+          <ToolBtn 
+            active={activeTool === 'eraser'} 
+            onClick={() => setTool('eraser')} 
+            icon={<Eraser className="w-5 h-5" />} 
+          />
+          <div className="w-px bg-border mx-1" />
+          <ToolBtn 
+            onClick={handleUndo} 
+            icon={<Undo className="w-5 h-5" />} 
+            title="Undo"
+          />
         </div>
       </div>
 
-      {/* Stroke Size */}
-      <div className="toolbar-section">
-        <div className="toolbar-section-label">Size</div>
-        <div className="size-group">
+      {/* Colors */}
+      <div className="flex flex-col gap-2 px-3 border-r border-border">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1 hidden sm:block">Color</span>
+        <div className="flex items-center gap-3">
+          <div className="grid grid-cols-6 gap-1.5">
+            {PRESET_COLORS.map(c => (
+              <button
+                key={c}
+                className={`w-6 h-6 rounded-sm border-2 transition-all ${activeColor === c ? 'border-root ring-2 ring-primary scale-110' : 'border-transparent hover:scale-110'}`}
+                style={{ backgroundColor: c }}
+                onClick={() => setColor(c)}
+              />
+            ))}
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <input
+              type="color"
+              value={activeColor}
+              onChange={(e) => setColor(e.target.value)}
+              className="w-8 h-8 rounded-md cursor-pointer border-0 p-0 bg-transparent"
+            />
+            <span className="text-[10px] font-mono text-gray-500 uppercase">{activeColor}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Size */}
+      <div className="hidden md:flex flex-col gap-2 px-3">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Size</span>
+        <div className="flex items-center gap-1">
           {SIZES.map(s => (
             <button
               key={s}
-              className={`size-btn ${lineWidth === s ? 'active' : ''}`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${lineWidth === s ? 'bg-primary/20 ring-1 ring-primary/50' : 'hover:bg-surface-elevated'}`}
               onClick={() => setLineWidth(s)}
-              title={`${s}px`}
             >
-              <span
-                className="size-preview"
-                style={{
-                  width: Math.min(s * 2.5, 24) + 'px',
-                  height: Math.min(s * 2.5, 24) + 'px',
-                }}
-              />
+              <span className="block bg-gray-300 rounded-full" style={{ width: s, height: s }} />
             </button>
           ))}
         </div>
-        <input
-          type="range"
-          min="1"
-          max="20"
-          value={lineWidth}
-          onChange={(e) => setLineWidth(Number(e.target.value))}
-          className="size-slider"
-          id="line-width-slider"
-        />
       </div>
-    </div>
+    </motion.div>
+  );
+}
+
+function ToolBtn({ active, onClick, icon, title }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${active ? 'bg-primary border border-primary-light text-white shadow-lg shadow-primary/20' : 'text-gray-400 bg-transparent border border-transparent hover:bg-surface-elevated hover:text-white'}`}
+    >
+      {icon}
+    </button>
   );
 }

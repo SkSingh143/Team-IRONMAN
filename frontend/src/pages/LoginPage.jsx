@@ -1,180 +1,124 @@
 // src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import useAuthStore from '../store/authStore';
+import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/authApi';
-import { useToast } from '../components/common/Toast';
-import '../styles/auth.css';
+import useAuthStore from '../store/authStore';
+import { motion } from 'framer-motion';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const { setAuth, user } = useAuthStore();
-  const toast = useToast();
-
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState('');
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Redirect if already logged in
-  if (user) {
-    navigate('/dashboard', { replace: true });
-    return null;
-  }
-
-  const validate = () => {
-    const errs = {};
-    if (!form.email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      errs.email = 'Enter a valid email address';
-    }
-    if (!form.password) {
-      errs.password = 'Password is required';
-    } else if (form.password.length < 8) {
-      errs.password = 'Password must be at least 8 characters';
-    }
-    return errs;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    // Clear field error on change
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-    if (apiError) setApiError('');
-  };
+  const navigate = useNavigate();
+  const setAuth = useAuthStore(state => state.setAuth);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) {
-      setErrors(errs);
+    if (!formData.email || !formData.password) {
+      setError('Both fields are required');
       return;
     }
 
-    setLoading(true);
-    setApiError('');
-
     try {
-      const { data } = await login({
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
+      setLoading(true);
+      setError('');
+      const { data } = await login(formData);
       setAuth(data.user, data.accessToken);
-      toast.success('Welcome back!', 'Logged in successfully');
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.error || 'Login failed. Please try again.';
-      setApiError(msg);
-      toast.error(msg);
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-layout bg-grid">
-      <div className="auth-container">
-        <div className="auth-card">
-          {/* Logo */}
-          <div className="auth-logo">
-            <div className="auth-logo-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <div className="min-h-screen flex items-center justify-center bg-root p-4 relative overflow-hidden">
+      {/* Background blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md"
+      >
+        <div className="glass-panel p-8 rounded-2xl shadow-2xl border border-border">
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-flex items-center justify-center gap-2 text-white font-bold text-2xl mb-2 hover:opacity-80 transition-opacity">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #6C63FF)" strokeWidth="2.5" className="w-8 h-8">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
               </svg>
-            </div>
-            <span className="auth-logo-text">LiveCollab</span>
+            </Link>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Welcome back</h1>
+            <p className="text-gray-400 text-sm mt-1">Log in to access your workspaces</p>
           </div>
 
-          {/* Header */}
-          <div className="auth-header">
-            <h1>Welcome back</h1>
-            <p>Sign in to continue collaborating with your team</p>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }} 
+                animate={{ opacity: 1, height: 'auto' }} 
+                className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-medium text-center"
+              >
+                {error}
+              </motion.div>
+            )}
 
-          {/* Error */}
-          {apiError && (
-            <div className="auth-error">
-              <svg viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span>{apiError}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form className="auth-form" onSubmit={handleSubmit} noValidate>
-            <div className="input-group">
-              <label htmlFor="login-email">Email address</label>
-              <div className="input-wrapper">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                  <Mail className="w-5 h-5" />
+                </div>
                 <input
-                  id="login-email"
-                  className={`input ${errors.email ? 'input-error' : ''}`}
                   type="email"
-                  name="email"
-                  placeholder="you@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
+                  className="w-full pl-10 pr-4 py-3 bg-surface-input border border-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  placeholder="name@company.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   autoFocus
                 />
-                <svg className="input-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
               </div>
-              {errors.email && <span className="field-error">{errors.email}</span>}
             </div>
 
-            <div className="input-group">
-              <label htmlFor="login-password">Password</label>
-              <div className="input-wrapper">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                  <Lock className="w-5 h-5" />
+                </div>
                 <input
-                  id="login-password"
-                  className={`input ${errors.password ? 'input-error' : ''}`}
                   type="password"
-                  name="password"
+                  className="w-full pl-10 pr-4 py-3 bg-surface-input border border-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   placeholder="••••••••"
-                  value={form.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
-                <svg className="input-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                </svg>
               </div>
-              {errors.password && <span className="field-error">{errors.password}</span>}
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary btn-lg auth-submit w-full"
               disabled={loading}
-              id="login-submit-btn"
+              className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <span className="spinner spinner-sm" />
-                  Signing in…
-                </>
-              ) : (
-                'Sign in'
-              )}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In'}
             </button>
           </form>
 
-          {/* Footer */}
-          <div className="auth-footer">
+          <div className="mt-8 pt-6 border-t border-border text-center text-sm text-gray-400">
             Don't have an account?{' '}
-            <Link to="/register">Create one</Link>
+            <Link to="/register" className="text-primary hover:text-primary-dark font-medium transition-colors">
+              Sign up here
+            </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

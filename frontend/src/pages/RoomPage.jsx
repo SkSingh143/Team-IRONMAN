@@ -14,47 +14,22 @@ import CursorOverlay from '../components/canvas/CursorOverlay';
 import CodePanel from '../components/code/CodePanel';
 import PollPanel from '../components/poll/PollPanel';
 import VoicePanel from '../components/voice/VoicePanel';
-import '../styles/room.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PenTool, Code, BarChart2, Mic, Copy, Check, Users, ChevronRight, Menu } from 'lucide-react';
 
-// Tab icons
-const TabIcons = {
-  canvas: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 19l7-7 3 3-7 7-3-3z" />
-      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-      <path d="M2 2l7.586 7.586" />
-      <circle cx="11" cy="11" r="2" />
-    </svg>
-  ),
-  code: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
-    </svg>
-  ),
-  poll: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-    </svg>
-  ),
-  voice: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-      <path d="M19 10v2a7 7 0 01-14 0v-2" />
-      <line x1="12" y1="19" x2="12" y2="23" />
-      <line x1="8" y1="23" x2="16" y2="23" />
-    </svg>
-  ),
-};
+const tabs = [
+  { key: 'canvas', label: 'Canvas', icon: PenTool },
+  { key: 'code', label: 'Code', icon: Code },
+  { key: 'poll', label: 'Polls', icon: BarChart2 },
+  { key: 'voice', label: 'Voice', icon: Mic },
+];
 
 export default function RoomPage() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuthStore();
-  const { setRoom, setMembers, members, roomName, clearRoom } = useRoomStore();
+  const { setRoom, setMembers, members, roomName, polls, clearRoom } = useRoomStore();
   const { activeTab, setTab } = useUIStore();
 
   const [loading, setLoading] = useState(true);
@@ -93,48 +68,37 @@ export default function RoomPage() {
   useWebSocket(loading || error ? null : roomId);
 
   // Copy invite link
-  const handleCopyInvite = useCallback(async () => {
+  const handleCopyInvite = useCallback(() => {
     const link = `${window.location.origin}/room/${roomId}`;
-    try {
-      await navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       toast.success('Invite link copied!');
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      const input = document.createElement('input');
-      input.value = link;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand('copy');
-      document.body.removeChild(input);
-      setCopied(true);
-      toast.success('Invite link copied!');
-      setTimeout(() => setCopied(false), 2000);
-    }
+    });
   }, [roomId, toast]);
 
-  // Loading state
   if (loading) {
     return (
-      <div className="room-loading">
-        <div className="spinner" />
-        <span>Loading room…</span>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-root text-white gap-4">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-400 font-medium">Loading room…</p>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="room-error">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="15" y1="9" x2="9" y2="15" />
-          <line x1="9" y1="9" x2="15" y2="15" />
-        </svg>
-        <h2>Couldn't join room</h2>
-        <p>{error}</p>
-        <button className="btn btn-primary" onClick={() => navigate('/dashboard')}>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-root text-center p-4">
+        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-6">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Couldn't join room</h2>
+        <p className="text-gray-400 mb-8 max-w-sm">{error}</p>
+        <button className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition-colors" onClick={() => navigate('/dashboard')}>
           Back to Dashboard
         </button>
       </div>
@@ -142,85 +106,77 @@ export default function RoomPage() {
   }
 
   const inviteLink = `${window.location.origin}/room/${roomId}`;
-  const tabs = [
-    { key: 'canvas', label: 'Canvas', icon: TabIcons.canvas },
-    { key: 'code', label: 'Code', icon: TabIcons.code },
-    { key: 'poll', label: 'Polls', icon: TabIcons.poll },
-    { key: 'voice', label: 'Voice', icon: TabIcons.voice },
-  ];
 
   return (
-    <div className="room-layout">
+    <div className="flex flex-col h-screen bg-root overflow-hidden">
       <Navbar roomName={roomName} roomId={roomId} />
 
-      <div className="room-workspace">
-        {/* ---- Left Toolbar (tabs) ---- */}
-        <aside className="room-toolbar">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`toolbar-btn ${activeTab === tab.key ? 'active' : ''}`}
-              onClick={() => setTab(tab.key)}
-              title={tab.label}
-              id={`toolbar-${tab.key}`}
-            >
-              {tab.icon}
-            </button>
-          ))}
-          <div className="toolbar-divider" />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* ---- Left Toolbar (Vertical Tabs for layout >= md) ---- */}
+        <aside className="hidden md:flex flex-col items-center w-16 bg-surface border-r border-border py-4 gap-2 shrink-0 z-30">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setTab(tab.key)}
+                title={tab.label}
+                className={`relative p-3 rounded-xl transition-all group ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+                {tab.key === 'poll' && polls.length > 0 && (
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-accent rounded-full border-2 border-surface"></span>
+                )}
+              </button>
+            );
+          })}
+          
+          <div className="w-8 h-px bg-border my-2" />
+          
           <button
-            className="sidebar-toggle"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            title="Toggle members"
+            title="Toggle Members Sidebar"
+            className="p-3 rounded-xl text-gray-400 hover:bg-surface-elevated hover:text-white transition-colors mt-auto relative"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 00-3-3.87" />
-              <path d="M16 3.13a4 4 0 010 7.75" />
-            </svg>
+            <Users className="w-5 h-5" />
+            <span className="absolute bottom-2 right-2 flex w-2.5 h-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-surface"></span>
+            </span>
           </button>
         </aside>
 
-        {/* ---- Main Content ---- */}
-        <div className="room-main">
-          {/* Tab Bar */}
-          <div className="room-tab-bar">
-            <div className="room-tabs">
-              {tabs.map((tab) => (
+        {/* ---- Main Content Area ---- */}
+        <main className="flex-1 flex flex-col min-w-0 bg-root relative overflow-hidden">
+          
+          {/* Mobile Top Tab Bar (Visible on <md) */}
+          <div className="md:hidden flex items-center bg-surface border-b border-border p-2 gap-1 overflow-x-auto hide-scrollbar z-30 shrink-0">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
                 <button
                   key={tab.key}
-                  className={`room-tab ${activeTab === tab.key ? 'active' : ''}`}
                   onClick={() => setTab(tab.key)}
-                  id={`tab-${tab.key}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap text-sm font-semibold transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
                 >
-                  {tab.icon}
-                  <span>{tab.label}</span>
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                  {tab.key === 'poll' && polls.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-accent/20 text-accent text-[10px] ml-1">{polls.length}</span>
+                  )}
                 </button>
-              ))}
-            </div>
-            <div className="room-tab-actions">
-              <div className="members-count">
-                <span className="dot" />
-                {members.length} online
-              </div>
-              <button
-                className="sidebar-toggle"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                title="Toggle members"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                  <path d="M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </button>
-            </div>
+              );
+            })}
+            <div className="flex-1" />
+            <button onClick={() => setSidebarOpen(true)} className="p-2 ml-2 text-gray-400 hover:text-white shrink-0">
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Active Tab Content */}
-          <div className="room-content">
+          <div className="flex-1 relative w-full h-full bg-root">
             {activeTab === 'canvas' && (
               <>
                 <Canvas />
@@ -232,75 +188,89 @@ export default function RoomPage() {
             {activeTab === 'poll' && <PollPanel />}
             {activeTab === 'voice' && <VoicePanel />}
           </div>
-        </div>
+        </main>
 
-        {/* ---- Right Sidebar ---- */}
-        <aside className={`room-sidebar ${sidebarOpen ? 'open' : ''}`}>
-          <div className="sidebar-section">
-            <div className="sidebar-title">Room</div>
-            <div className="room-info-name">{roomName || 'Untitled Room'}</div>
-            <div className="room-info-id">ID: {roomId}</div>
-            <div className="invite-row">
-              <input
-                className="invite-input"
-                value={inviteLink}
-                readOnly
-                onClick={(e) => e.target.select()}
-                id="invite-link-input"
+        {/* ---- Right Sidebar (Members & Room Info) ---- */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <>
+              {/* Mobile overlay backdrop */}
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="md:hidden fixed inset-0 bg-black/60 z-40"
+                onClick={() => setSidebarOpen(false)}
               />
-              <button
-                className={`invite-copy-btn ${copied ? 'copied' : ''}`}
-                onClick={handleCopyInvite}
-                title="Copy invite link"
-                id="copy-invite-btn"
+              
+              <motion.aside
+                initial={{ x: 300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 300, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="fixed md:static inset-y-0 right-0 w-72 bg-surface-elevated border-l border-border flex flex-col z-50 shrink-0 shadow-2xl"
               >
-                {copied ? (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <div className="sidebar-title">Members ({members.length})</div>
-            <div className="member-list">
-              {members.length === 0 ? (
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', padding: 'var(--space-2) 0' }}>
-                  Connecting…
+                <div className="p-5 border-b border-border flex items-center justify-between">
+                  <h3 className="font-bold text-white text-lg">Room Details</h3>
+                  <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-gray-400 hover:text-white">
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
-              ) : (
-                members.map((m) => {
-                  const isMe = m.userId === user?._id;
-                  const initials = (m.username || '??').slice(0, 2).toUpperCase();
-                  return (
-                    <div key={m.userId} className="member-item">
-                      <div className={`member-avatar ${m.role === 'admin' ? 'admin' : 'member-role'}`}>
-                        {initials}
-                      </div>
-                      <div className="member-info">
-                        <div className="member-name">
-                          {m.username}
-                          {isMe && <span className="member-you"> (you)</span>}
-                        </div>
-                        <div className={`member-role-badge ${m.role === 'admin' ? 'admin' : 'member-role'}`}>
-                          {m.role}
-                        </div>
-                      </div>
-                      <div className="member-status-dot" />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </aside>
+
+                <div className="p-5 border-b border-border">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Invite Link</div>
+                  <div className="flex items-center gap-2 bg-surface-input border border-border rounded-lg p-1.5 focus-within:border-primary transition-colors">
+                    <input
+                      readOnly
+                      value={inviteLink}
+                      onClick={(e) => e.target.select()}
+                      className="flex-1 bg-transparent text-gray-300 text-xs px-2 focus:outline-none truncate"
+                    />
+                    <button 
+                      onClick={handleCopyInvite}
+                      className={`p-1.5 rounded-md transition-colors ${copied ? 'bg-primary/20 text-primary' : 'bg-surface-elevated text-gray-400 hover:text-white'}`}
+                      title="Copy link"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-5 flex-1 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Members</div>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold">{members.length}</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {members.length === 0 ? (
+                      <p className="text-sm text-gray-500">Connecting...</p>
+                    ) : (
+                      members.map((m) => {
+                        const isMe = m.userId === user?._id;
+                        const initials = (m.username || '??').slice(0, 2).toUpperCase();
+                        return (
+                          <div key={m.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface transition-colors group">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-dark to-primary flex items-center justify-center text-white text-xs font-bold shadow-sm relative">
+                              {initials}
+                              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-surface-elevated rounded-full"></span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-200 truncate group-hover:text-white transition-colors">
+                                {m.username} {isMe && <span className="text-primary text-xs ml-1">(You)</span>}
+                              </div>
+                              {m.role === 'admin' && (
+                                <div className="text-[10px] uppercase font-bold tracking-wider text-accent mt-0.5">{m.role}</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

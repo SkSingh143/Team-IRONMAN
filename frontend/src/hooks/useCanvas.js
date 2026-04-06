@@ -47,7 +47,7 @@ export function useCanvas(canvasRef) {
     ctx.lineWidth = stroke.tool === 'eraser' ? stroke.lineWidth * 3 : stroke.lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.globalCompositeOperation = 'source-over';
 
     const pts = stroke.points;
     ctx.moveTo(pts[0][0], pts[0][1]);
@@ -127,7 +127,7 @@ export function useCanvas(canvasRef) {
     ctx.lineWidth = activeTool === 'eraser' ? lineWidth * 3 : lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.globalCompositeOperation = activeTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.globalCompositeOperation = 'source-over';
     ctx.moveTo(from[0], from[1]);
     ctx.lineTo(to[0], to[1]);
     ctx.stroke();
