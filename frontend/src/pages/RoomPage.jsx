@@ -6,7 +6,11 @@ import useRoomStore from '../store/roomStore';
 import useUIStore from '../store/uiStore';
 import { getRoom } from '../api/roomApi';
 import { useToast } from '../components/common/Toast';
+import { useWebSocket } from '../hooks/useWebSocket';
 import Navbar from '../components/common/Navbar';
+import Canvas from '../components/canvas/Canvas';
+import Toolbar from '../components/canvas/Toolbar';
+import CursorOverlay from '../components/canvas/CursorOverlay';
 import '../styles/room.css';
 
 // Tab icons
@@ -82,6 +86,9 @@ export default function RoomPage() {
     };
   }, [roomId]);
 
+  // Connect WebSocket after room loads
+  useWebSocket(loading || error ? null : roomId);
+
   // Copy invite link
   const handleCopyInvite = useCallback(async () => {
     const link = `${window.location.origin}/room/${roomId}`;
@@ -91,7 +98,6 @@ export default function RoomPage() {
       toast.success('Invite link copied!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const input = document.createElement('input');
       input.value = link;
       document.body.appendChild(input);
@@ -133,7 +139,6 @@ export default function RoomPage() {
   }
 
   const inviteLink = `${window.location.origin}/room/${roomId}`;
-
   const tabs = [
     { key: 'canvas', label: 'Canvas', icon: TabIcons.canvas },
     { key: 'code', label: 'Code', icon: TabIcons.code },
@@ -146,7 +151,7 @@ export default function RoomPage() {
       <Navbar roomName={roomName} roomId={roomId} />
 
       <div className="room-workspace">
-        {/* ---- Left Toolbar ---- */}
+        {/* ---- Left Toolbar (tabs) ---- */}
         <aside className="room-toolbar">
           {tabs.map((tab) => (
             <button
@@ -160,7 +165,6 @@ export default function RoomPage() {
             </button>
           ))}
           <div className="toolbar-divider" />
-          {/* Sidebar toggle for mobile */}
           <button
             className="sidebar-toggle"
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -212,17 +216,14 @@ export default function RoomPage() {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Active Tab Content */}
           <div className="room-content">
             {activeTab === 'canvas' && (
-              <div className="room-content-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                </svg>
-                <h3>Canvas</h3>
-                <p>The collaborative drawing canvas will appear here. Coming in Phase 3.</p>
-              </div>
+              <>
+                <Canvas />
+                <Toolbar />
+                <CursorOverlay />
+              </>
             )}
             {activeTab === 'code' && (
               <div className="room-content-placeholder">
@@ -260,13 +261,10 @@ export default function RoomPage() {
 
         {/* ---- Right Sidebar ---- */}
         <aside className={`room-sidebar ${sidebarOpen ? 'open' : ''}`}>
-          {/* Room Info */}
           <div className="sidebar-section">
             <div className="sidebar-title">Room</div>
             <div className="room-info-name">{roomName || 'Untitled Room'}</div>
-            <div className="room-info-id">
-              ID: {roomId}
-            </div>
+            <div className="room-info-id">ID: {roomId}</div>
             <div className="invite-row">
               <input
                 className="invite-input"
@@ -295,11 +293,8 @@ export default function RoomPage() {
             </div>
           </div>
 
-          {/* Members */}
           <div className="sidebar-section">
-            <div className="sidebar-title">
-              Members ({members.length})
-            </div>
+            <div className="sidebar-title">Members ({members.length})</div>
             <div className="member-list">
               {members.length === 0 ? (
                 <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', padding: 'var(--space-2) 0' }}>
