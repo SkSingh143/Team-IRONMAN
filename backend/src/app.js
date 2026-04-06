@@ -7,6 +7,9 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust proxy required for express-rate-limit when hosted behind a reverse proxy (e.g., Railway)
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: function (origin, callback) {
     // Permit ALL incoming network requests for local LAN testing

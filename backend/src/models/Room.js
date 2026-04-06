@@ -14,6 +14,4 @@ const RoomSchema = new Schema({
   codeLanguage: { type: String, default: 'javascript' },
 }, { timestamps: true });
 
-RoomSchema.index({ roomId: 1 });
-
 module.exports = mongoose.model('Room', RoomSchema);
