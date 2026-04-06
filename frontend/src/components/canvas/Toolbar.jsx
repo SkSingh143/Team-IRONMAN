@@ -85,9 +85,30 @@ export default function Toolbar() {
             <div className="flex flex-col gap-3 pt-4 border-t border-border">
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Shapes</span>
               <div className="grid grid-cols-3 gap-2">
-                <ToolBtn active={activeTool === 'rect'} onClick={() => hasPermission && setTool('rect')} icon={<Square className="w-4 h-4" />} title="Rectangle" disabled={!hasPermission}/>
-                <ToolBtn active={activeTool === 'circle'} onClick={() => hasPermission && setTool('circle')} icon={<Circle className="w-4 h-4" />} title="Circle" disabled={!hasPermission}/>
-                <ToolBtn active={activeTool === 'star'} onClick={() => hasPermission && setTool('star')} icon={<Star className="w-4 h-4" />} title="Star" disabled={!hasPermission}/>
+                <ToolBtn
+                  active={activeTool === 'rect'}
+                  onClick={() => hasPermission && setTool('rect')}
+                  icon={<Square className="w-4 h-4" />}
+                  title="Rectangle"
+                  disabled={!hasPermission}
+                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+                />
+                <ToolBtn
+                  active={activeTool === 'circle'}
+                  onClick={() => hasPermission && setTool('circle')}
+                  icon={<Circle className="w-4 h-4" />}
+                  title="Circle"
+                  disabled={!hasPermission}
+                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+                />
+                <ToolBtn
+                  active={activeTool === 'star'}
+                  onClick={() => hasPermission && setTool('star')}
+                  icon={<Star className="w-4 h-4" />}
+                  title="Star"
+                  disabled={!hasPermission}
+                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+                />
               </div>
             </div>
 
@@ -121,28 +142,44 @@ export default function Toolbar() {
             <div className={`flex flex-col gap-3 pt-4 border-t border-border ${!hasPermission ? 'opacity-40 pointer-events-none' : ''}`}>
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Thickness</span>
               <div className="grid grid-cols-3 gap-2">
-                {SIZES.map(s => (
-                  <button
-                    key={s}
-                    className={`h-10 flex items-center justify-center rounded-xl transition-all ${lineWidth === s ? 'bg-primary/20 border border-primary/50' : 'bg-surface-input hover:bg-surface-elevated border border-transparent'}`}
-                    onClick={() => setLineWidth(s)}
-                    disabled={!hasPermission}
-                  >
-                    <span className="block bg-gray-300 rounded-full" style={{ width: s, height: s }} />
-                  </button>
-                ))}
+	                {SIZES.map(s => (
+	                  <button
+	                    key={s}
+	                    className={`h-10 flex items-center justify-center rounded-xl transition-all ${lineWidth === s ? 'bg-primary/20 border border-primary/50' : 'bg-surface-input hover:bg-primary/10 border border-transparent'}`}
+	                    onClick={() => setLineWidth(s)}
+	                    disabled={!hasPermission}
+	                  >
+	                    <span className="block rounded-full bg-primary/80" style={{ width: s, height: s }} />
+	                  </button>
+	                ))}
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex flex-col gap-2 pt-4 border-t border-border mt-auto">
               <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Actions</span>
-              <div className="grid grid-cols-2 gap-2">
-                <ToolBtn onClick={hasPermission ? handleUndo : undefined} icon={<Undo className="w-4 h-4" />} title="Undo" disabled={!hasPermission}/>
-                <ToolBtn onClick={handleExport} icon={<Download className="w-4 h-4" />} title="Export as image"/>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <ToolBtn onClick={toggleTheme} icon={canvasTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-400" />} title="Toggle Theme" />
+	              <div className="grid grid-cols-2 gap-2">
+	                <ToolBtn
+	                  onClick={hasPermission ? handleUndo : undefined}
+	                  icon={<Undo className="w-4 h-4" />}
+	                  title="Undo"
+	                  disabled={!hasPermission}
+	                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+	                />
+	                <ToolBtn
+	                  onClick={handleExport}
+	                  icon={<Download className="w-4 h-4" />}
+	                  title="Export as image"
+	                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+	                />
+	              </div>
+	              <div className="grid grid-cols-2 gap-2">
+	                <ToolBtn
+	                  onClick={toggleTheme}
+	                  icon={canvasTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-primary" />}
+	                  title="Toggle Theme"
+	                  inactiveClassName="text-primary bg-surface-input hover:bg-primary/10 hover:text-primary-dark"
+	                />
                 {isAdmin && (
                   <ToolBtn onClick={handleClearCanvas} icon={<Trash2 className="w-4 h-4 text-red-500" />} title="Clear Canvas" />
                 )}
@@ -155,7 +192,7 @@ export default function Toolbar() {
   );
 }
 
-function ToolBtn({ active, onClick, icon, title, disabled }) {
+function ToolBtn({ active, onClick, icon, title, disabled, inactiveClassName }) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -165,7 +202,7 @@ function ToolBtn({ active, onClick, icon, title, disabled }) {
           ? 'text-gray-600 bg-surface-input/50 cursor-not-allowed'
           : active 
             ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-            : 'text-gray-400 bg-surface-input hover:bg-surface-elevated hover:text-white'
+            : inactiveClassName || 'text-gray-400 bg-surface-input hover:bg-surface-elevated hover:text-white'
       }`}
     >
       {icon}
