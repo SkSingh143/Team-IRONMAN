@@ -134,7 +134,8 @@ export function useVoice(roomId) {
         await pc.setLocalDescription(offer);
         wsManager.send('webrtc_offer', { 
           targetUserId: peerId, 
-          sdp: pc.localDescription 
+          sdp: pc.localDescription,
+          username: useAuthStore.getState().user?.username
         }, roomId);
       } catch (e) {
         console.error('Error creating offer', e);
@@ -149,11 +150,21 @@ export function useVoice(roomId) {
       const pc = createPeerConnection(peerId, payload.username);
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+        
+        // Process queued ICE candidates
+        if (pc.candidateQueue) {
+          for (const cand of pc.candidateQueue) {
+            await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.error);
+          }
+          pc.candidateQueue = [];
+        }
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         wsManager.send('webrtc_answer', { 
           targetUserId: peerId, 
-          sdp: pc.localDescription 
+          sdp: pc.localDescription,
+          username: useAuthStore.getState().user?.username
         }, roomId);
       } catch (e) {
         console.error('Error handling offer', e);
@@ -167,6 +178,14 @@ export function useVoice(roomId) {
       if (pc) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          
+          // Process queued ICE candidates
+          if (pc.candidateQueue) {
+            for (const cand of pc.candidateQueue) {
+              await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(console.error);
+            }
+            pc.candidateQueue = [];
+          }
         } catch (e) {
           console.error('Error setting remote answer', e);
         }
@@ -179,7 +198,12 @@ export function useVoice(roomId) {
       const pc = peerConnections.current.get(peerId);
       if (pc && payload.candidate) {
         try {
-          await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          if (pc.remoteDescription && pc.remoteDescription.type) {
+            await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+          } else {
+            if (!pc.candidateQueue) pc.candidateQueue = [];
+            pc.candidateQueue.push(payload.candidate);
+          }
         } catch (e) {
           console.error('Error adding ICE candidate', e);
         }
