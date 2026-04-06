@@ -91,7 +91,7 @@ export function useCanvas(canvasRef) {
     ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = activeTool === 'eraser' 
-      ? (canvasTheme === 'light' ? '#F8F9FA' : '#0B0D17') 
+      ? (canvasTheme === 'light' ? '#F8F9FA' : '#050505') 
       : activeColor;
     ctx.lineWidth = activeTool === 'eraser' ? lineWidth * 3 : lineWidth;
     ctx.lineCap = 'round';

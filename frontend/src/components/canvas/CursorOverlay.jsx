@@ -3,9 +3,9 @@ import useAuthStore from '../../store/authStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CURSOR_COLORS = [
-  '#FF6B6B', '#FFA94D', '#FFD43B', '#69DB7C',
-  '#4DABF7', '#9775FA', '#F783AC', '#20C997',
-  '#E64980', '#339AF0', '#FF922B', '#51CF66',
+  '#C97B63', '#D4A373', '#E6B566', '#6B705C',
+  '#B08968', '#7F5539', '#9C6644', '#2D6A4F',
+  '#A8A29E', '#DDB892', '#BC6C25', '#ADC178',
 ];
 
 function getCursorColor(userId) {

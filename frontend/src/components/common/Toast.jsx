@@ -49,7 +49,7 @@ function ToastCard({ toast, onRemove }) {
       case 'warning':
         return { icon: <AlertTriangle className="text-amber-400" />, border: 'border-amber-500/30', bg: 'bg-amber-500/10' };
       default:
-        return { icon: <Info className="text-blue-400" />, border: 'border-blue-500/30', bg: 'bg-blue-500/10' };
+        return { icon: <Info className="text-primary" />, border: 'border-primary/30', bg: 'bg-primary/10' };
     }
   };
 

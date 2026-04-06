@@ -4,7 +4,7 @@ export const drawStroke = (ctx, stroke) => {
   ctx.save();
   ctx.beginPath();
   ctx.strokeStyle = stroke.tool === 'eraser' 
-    ? (stroke.theme === 'light' ? '#F8F9FA' : '#0B0D17') 
+    ? (stroke.theme === 'light' ? '#F8F9FA' : '#050505') 
     : stroke.color;
   ctx.lineWidth = stroke.tool === 'eraser' ? stroke.lineWidth * 3 : stroke.lineWidth;
   ctx.lineCap = 'round';
@@ -118,7 +118,7 @@ export const exportAsImage = (elements, canvasTheme) => {
   tempCanvas.height = height;
   const tempCtx = tempCanvas.getContext('2d');
 
-  tempCtx.fillStyle = canvasTheme === 'light' ? '#F8F9FA' : '#0B0D17';
+  tempCtx.fillStyle = canvasTheme === 'light' ? '#F8F9FA' : '#050505';
   tempCtx.fillRect(0, 0, width, height);
   tempCtx.translate(-minX + padding, -minY + padding);
   

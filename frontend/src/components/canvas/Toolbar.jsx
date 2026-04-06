@@ -8,9 +8,9 @@ import { PenTool, Eraser, Undo, Moon, Sun, Trash2, Download, ShieldAlert, Square
 import { exportAsImage } from '../../utils/canvasUtils';
 
 const PRESET_COLORS = [
-  '#FFFFFF', '#FF6B6B', '#FFA94D', '#FFD43B',
-  '#69DB7C', '#4DABF7', '#9775FA', '#F783AC',
-  '#868E96', '#20C997', '#339AF0', '#E64980',
+  '#FFFFFF', '#111111', '#8B5E3C', '#D4A373',
+  '#6B705C', '#2D6A4F', '#9C6644', '#B08968',
+  '#A8A29E', '#7F5539', '#C97B63', '#E7D7C1',
 ];
 
 const SIZES = [2, 4, 6, 8, 12, 16];
@@ -142,7 +142,7 @@ export default function Toolbar() {
                 <ToolBtn onClick={handleExport} icon={<Download className="w-4 h-4" />} title="Export as image"/>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <ToolBtn onClick={toggleTheme} icon={canvasTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />} title="Toggle Theme" />
+                <ToolBtn onClick={toggleTheme} icon={canvasTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-zinc-400" />} title="Toggle Theme" />
                 {isAdmin && (
                   <ToolBtn onClick={handleClearCanvas} icon={<Trash2 className="w-4 h-4 text-red-500" />} title="Clear Canvas" />
                 )}

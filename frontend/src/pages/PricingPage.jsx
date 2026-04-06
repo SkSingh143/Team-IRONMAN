@@ -21,10 +21,10 @@ const plans = [
     tokens: 7500,
     description: 'Perfect for students and small teams getting started with collaborative sessions.',
     icon: Zap,
-    color: 'from-blue-500 to-cyan-400',
-    borderColor: 'border-blue-500/20',
-    shadowColor: 'shadow-blue-500/10',
-    glowColor: 'bg-blue-500',
+    color: 'from-zinc-700 to-stone-500',
+    borderColor: 'border-zinc-500/20',
+    shadowColor: 'shadow-zinc-500/10',
+    glowColor: 'bg-zinc-500',
     features: [
       'Up to 25 collaboration sessions',
       '7,500 tokens (300 per session)',
@@ -126,7 +126,7 @@ export default function PricingPage() {
         {/* Background effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 left-0 w-[300px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/3 left-0 w-[300px] h-[300px] bg-zinc-500/5 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto px-6 py-16 relative z-10">
           
@@ -140,13 +140,13 @@ export default function PricingPage() {
               <Sparkles className="w-4 h-4" />
               Session-Based Pricing
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-main mb-4 tracking-tight">
               Pay Only When You{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-blue-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-stone-300">
                 Collaborate
               </span>
             </h1>
-            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+            <p className="text-muted text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
               No monthly subscriptions. No hidden fees. Purchase sessions and use them whenever your team needs to collaborate in real-time.
             </p>
 
@@ -155,24 +155,24 @@ export default function PricingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-8 inline-flex flex-wrap items-center justify-center gap-4 md:gap-8 px-6 py-4 bg-surface/80 backdrop-blur-sm border border-border rounded-2xl"
+              className="mt-8 inline-flex flex-wrap items-center justify-center gap-4 md:gap-8 px-6 py-4 glass-panel rounded-2xl"
             >
               <div className="flex items-center gap-2 text-sm">
                 <Gift className="w-5 h-5 text-accent" />
-                <span className="text-gray-400">Free to start:</span>
-                <span className="text-white font-bold">{INITIAL_TOKENS} tokens</span>
+                <span className="text-muted">Free to start:</span>
+                <span className="text-main font-bold">{INITIAL_TOKENS} tokens</span>
               </div>
               <div className="w-px h-6 bg-border hidden md:block" />
               <div className="flex items-center gap-2 text-sm">
                 <Coins className="w-5 h-5 text-amber-400" />
-                <span className="text-gray-400">Per session:</span>
-                <span className="text-white font-bold">{TOKENS_PER_SESSION} tokens</span>
+                <span className="text-muted">Per session:</span>
+                <span className="text-main font-bold">{TOKENS_PER_SESSION} tokens</span>
               </div>
               <div className="w-px h-6 bg-border hidden md:block" />
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <span className="text-gray-400">Free sessions:</span>
-                <span className="text-white font-bold">2 sessions included</span>
+                <span className="text-muted">Free sessions:</span>
+                <span className="text-main font-bold">2 sessions included</span>
               </div>
             </motion.div>
           </motion.div>
@@ -190,10 +190,10 @@ export default function PricingPage() {
                   transition={{ delay: 0.1 * (index + 1), type: 'spring', stiffness: 200 }}
                   onHoverStart={() => setHoveredPlan(plan.id)}
                   onHoverEnd={() => setHoveredPlan(null)}
-                  className={`relative rounded-3xl transition-all duration-500 ${
+                  className={`relative rounded-[2rem] transition-all duration-500 ${
                     plan.popular 
-                      ? 'bg-surface/90 backdrop-blur-md border-2 border-primary/40 shadow-2xl shadow-primary/10 scale-[1.02] md:-mt-4 md:mb-4'
-                      : `bg-surface/70 backdrop-blur-sm border ${plan.borderColor} ${plan.shadowColor}`
+                      ? 'premium-card border-primary/40 md:-mt-4 md:mb-4'
+                      : `glass-panel ${plan.borderColor} ${plan.shadowColor}`
                   } ${isHovered ? 'transform -translate-y-2 shadow-2xl' : ''}`}
                 >
                   {/* Popular badge */}
@@ -210,17 +210,17 @@ export default function PricingPage() {
                         <Icon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                        <h3 className="font-display text-xl font-bold text-main">{plan.name}</h3>
                       </div>
                     </div>
 
                     {/* Price */}
                     <div className="mb-4">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                        {plan.priceNum && <span className="text-gray-500 text-sm font-medium">/ pack</span>}
+                        <span className="font-display text-4xl font-extrabold text-main">{plan.price}</span>
+                        {plan.priceNum && <span className="text-muted text-sm font-medium">/ pack</span>}
                       </div>
-                      <div className="mt-1 text-sm text-gray-400">
+                      <div className="mt-1 text-sm text-muted">
                         {typeof plan.sessions === 'number' ? (
                           <>{plan.sessions} sessions · {plan.tokens.toLocaleString()} tokens</>
                         ) : (
@@ -230,7 +230,7 @@ export default function PricingPage() {
                     </div>
 
                     {/* Description */}
-                    <p className="text-sm text-gray-400 mb-6 leading-relaxed min-h-[40px]">
+                    <p className="text-sm text-muted mb-6 leading-relaxed min-h-[40px]">
                       {plan.description}
                     </p>
 
@@ -249,7 +249,7 @@ export default function PricingPage() {
 
                     {/* Features List */}
                     <div className="mt-8 space-y-3">
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">What's included</div>
+                      <div className="text-xs font-semibold text-muted uppercase tracking-wider">What's included</div>
                       {plan.features.map((feature, fi) => (
                         <motion.div
                           key={fi}
@@ -261,7 +261,7 @@ export default function PricingPage() {
                           <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${plan.color} flex items-center justify-center shrink-0 mt-0.5`}>
                             <Check className="w-3 h-3 text-white" />
                           </div>
-                          <span className="text-sm text-gray-300">{feature}</span>
+                          <span className="text-sm text-main">{feature}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -278,12 +278,12 @@ export default function PricingPage() {
             transition={{ delay: 0.5 }}
             className="mb-20"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">How Token Sessions Work</h2>
-            <p className="text-gray-400 text-center mb-12 max-w-lg mx-auto">Simple, transparent, and usage-driven pricing that scales with your team.</p>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-main text-center mb-2">How Token Sessions Work</h2>
+            <p className="text-muted text-center mb-12 max-w-lg mx-auto">Simple, transparent, and usage-driven pricing that scales with your team.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {[
-                { step: '01', title: 'Register', desc: 'Sign up for free and get 600 tokens to start — enough for 2 sessions.', icon: Users, color: 'text-blue-400' },
+                { step: '01', title: 'Register', desc: 'Sign up for free and get 600 tokens to start — enough for 2 sessions.', icon: Users, color: 'text-zinc-400' },
                 { step: '02', title: 'Create Room', desc: 'Start a collaboration room. Each active session costs 300 tokens from the room creator.', icon: Zap, color: 'text-primary' },
                 { step: '03', title: 'Collaborate', desc: 'Invite team members to draw, code, and communicate in real-time.', icon: Headphones, color: 'text-accent' },
                 { step: '04', title: 'Recharge', desc: 'When tokens run low, purchase a plan to keep your team collaborating.', icon: Coins, color: 'text-amber-400' },
@@ -293,12 +293,12 @@ export default function PricingPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 + idx * 0.1 }}
-                  className="relative bg-surface/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all group hover:-translate-y-1"
+                  className="relative glass-panel rounded-2xl p-6 hover:border-primary/30 transition-all group hover:-translate-y-1"
                 >
-                  <div className="text-[64px] font-black text-gray-800/50 absolute top-2 right-4 select-none group-hover:text-gray-700/50 transition-colors">{item.step}</div>
+                  <div className="text-[64px] font-black text-muted/20 absolute top-2 right-4 select-none group-hover:text-muted/30 transition-colors">{item.step}</div>
                   <item.icon className={`w-8 h-8 ${item.color} mb-4`} />
-                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-display text-lg font-bold text-main mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{item.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -309,9 +309,9 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="max-w-2xl mx-auto bg-surface/60 backdrop-blur-sm border border-border rounded-2xl p-8 mb-16"
+            className="max-w-2xl mx-auto glass-panel rounded-2xl p-8 mb-16"
           >
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <h3 className="font-display text-lg font-bold text-main mb-6 flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
               Pricing FAQ
             </h3>
@@ -323,8 +323,8 @@ export default function PricingPage() {
                 { q: 'What happens when I run out of tokens?', a: 'You can still join rooms created by others. To create new rooms, purchase a plan to recharge your token balance.' },
               ].map((item, idx) => (
                 <div key={idx}>
-                  <h4 className="text-sm font-semibold text-white mb-1">{item.q}</h4>
-                  <p className="text-sm text-gray-400">{item.a}</p>
+                  <h4 className="text-sm font-semibold text-main mb-1">{item.q}</h4>
+                  <p className="text-sm text-muted">{item.a}</p>
                 </div>
               ))}
             </div>

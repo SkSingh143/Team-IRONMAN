@@ -2,8 +2,9 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import useRoomStore from '../../store/roomStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Home, Copy, Check, Users, Coins, DoorOpen, Trash2, Save } from 'lucide-react';
+import { LogOut, Home, Copy, Check, Users, Coins, DoorOpen, Trash2, Save, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
+import useThemeStore from '../../store/useThemeStore';
 import { useToast } from './Toast';
 import { logout as apiLogout } from '../../api/authApi';
 import { deleteRoom } from '../../api/roomApi';
@@ -11,6 +12,7 @@ import { deleteRoom } from '../../api/roomApi';
 export default function Navbar({ roomName, roomId }) {
   const { user, clearAuth } = useAuthStore();
   const { members } = useRoomStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const toast = useToast();
   
@@ -65,29 +67,32 @@ export default function Navbar({ roomName, roomId }) {
 
   return (
     <>
-      <nav className="h-16 flex items-center justify-between px-6 bg-surface border-b border-border shrink-0 z-40 relative shadow-sm">
+      <nav className="h-16 flex items-center justify-between px-6 bg-surface border-b border-border shrink-0 z-40 relative shadow-sm text-main transition-colors duration-300">
         <div className="flex items-center gap-4">
           {/* Brand */}
-          <Link to="/dashboard" className="flex items-center gap-2 text-white font-bold text-lg hover:opacity-80 transition-opacity">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #6C63FF)" strokeWidth="2.5" className="w-6 h-6">
+          <Link to="/dashboard" className="flex items-center gap-2 text-main font-bold hover:opacity-80 transition-opacity">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #6C63FF)" strokeWidth="2.5" className="w-7 h-7">
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
             </svg>
-            <span className="hidden sm:inline">LiveCollab</span>
+            <div className="flex flex-col">
+              <span className="hidden sm:inline font-display text-xl font-extrabold tracking-tight leading-none mt-1">LiveCollab</span>
+              <span className="hidden sm:inline font-cursive text-primary text-sm leading-none ml-auto -mt-0.5 tracking-wider pr-1">premium</span>
+            </div>
           </Link>
 
           {roomId && (
             <>
               <div className="w-px h-8 bg-border mx-2" />
               <div className="flex items-center gap-4">
-                <span className="font-semibold text-white tracking-wide truncate max-w-[120px] sm:max-w-xs">{roomName || 'Untitled Room'}</span>
+                <span className="font-display font-bold text-main tracking-wide truncate max-w-[120px] sm:max-w-xs">{roomName || 'Untitled Room'}</span>
                 <button 
                   onClick={handleCopy}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-elevated hover:bg-surface-elevated/80 border border-border rounded-lg text-xs font-semibold text-gray-300 transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-elevated hover:bg-surface border border-border rounded-xl text-xs font-bold text-muted hover:text-main hover:border-primary/50 transition-all shadow-sm"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span className="hidden sm:inline">{roomId}</span>
+                  <span className="hidden sm:inline font-mono tracking-wider">{roomId}</span>
                 </button>
               </div>
             </>
@@ -104,10 +109,19 @@ export default function Navbar({ roomName, roomId }) {
             <span className="hidden sm:inline">Tokens</span>
           </Link>
 
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-muted hover:text-main rounded-xl transition-all flex items-center justify-center bg-surface-elevated border border-border hover:border-border-focus shadow-sm"
+            title="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           {roomId && (
             <button 
               onClick={handleExitClicked} 
-              className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-bold mr-1"
+              className="text-red-500 hover:text-red-400 hover:bg-red-500/10 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1.5 text-sm font-bold mr-1"
             >
               <DoorOpen className="w-4 h-4" />
               <span className="hidden sm:inline">Exit Room</span>
@@ -115,15 +129,17 @@ export default function Navbar({ roomName, roomId }) {
           )}
           <div className="flex items-center gap-4 pl-6 border-l border-border">
             <div className="flex flex-col items-end hidden sm:flex">
-              <span className="text-sm font-semibold text-white leading-none">{user?.username}</span>
-              <span className="text-xs text-gray-500">{user?.email}</span>
+              <span className="text-sm font-bold text-main leading-none flex items-center gap-2">
+                {user?.username}
+              </span>
+              <span className="text-[10px] text-muted uppercase tracking-wider font-semibold mt-1">{user?.email}</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm shadow-md">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-sm shadow-md hover:scale-105 transition-transform cursor-pointer border-2 border-surface-elevated">
               {user?.username?.slice(0, 2).toUpperCase() || 'U'}
             </div>
             <button 
               onClick={handleLogout}
-              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors ml-1"
+              className="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors ml-1"
               title="Log out"
             >
               <LogOut className="w-4 h-4" />

@@ -45,20 +45,20 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md"
       >
-        <div className="glass-panel p-8 rounded-2xl shadow-2xl border border-border">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center justify-center gap-2 text-white font-bold text-2xl mb-2 hover:opacity-80 transition-opacity">
+        <div className="premium-card p-10 rounded-[2rem] shadow-2xl border border-border">
+          <div className="text-center mb-10">
+            <Link to="/" className="inline-flex items-center justify-center gap-2 text-main font-bold text-2xl mb-4 hover:opacity-80 transition-opacity">
               <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #6C63FF)" strokeWidth="2.5" className="w-8 h-8">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </Link>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Welcome back</h1>
-            <p className="text-gray-400 text-sm mt-1">Log in to access your workspaces</p>
+            <h1 className="font-display text-3xl font-bold text-main tracking-tight">Welcome back</h1>
+            <p className="text-muted text-sm mt-2">Log in to access your workspaces</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }} 
@@ -69,15 +69,15 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-[0.1em] ml-1">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted">
                   <Mail className="w-5 h-5" />
                 </div>
                 <input
                   type="email"
-                  className="w-full pl-10 pr-4 py-3 bg-surface-input border border-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  className="w-full pl-11 pr-4 py-3.5 bg-surface text-sm border border-border rounded-xl text-main placeholder-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors shadow-inner"
                   placeholder="name@company.com"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -86,15 +86,15 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-[0.1em] ml-1">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted">
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
                   type="password"
-                  className="w-full pl-10 pr-4 py-3 bg-surface-input border border-border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  className="w-full pl-11 pr-4 py-3.5 bg-surface text-sm border border-border rounded-xl text-main placeholder-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors shadow-inner"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -105,15 +105,15 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 text-sm"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Log In'}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-border text-center text-sm text-gray-400">
+          <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted">
             Don't have an account?{' '}
-            <Link to="/register" className="text-primary hover:text-primary-dark font-medium transition-colors">
+            <Link to="/register" className="text-primary hover:text-primary-dark font-semibold transition-colors">
               Sign up here
             </Link>
           </div>

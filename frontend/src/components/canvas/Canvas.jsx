@@ -1,10 +1,10 @@
 import { useRef, useEffect } from 'react';
 import { useCanvas } from '../../hooks/useCanvas';
-import useUIStore from '../../store/uiStore';
+import useThemeStore from '../../store/useThemeStore';
 
 export default function Canvas() {
   const canvasRef = useRef(null);
-  const canvasTheme = useUIStore(s => s.canvasTheme);
+  const theme = useThemeStore(s => s.theme);
   const {
     onPointerDown,
     onPointerMove,
@@ -21,9 +21,9 @@ export default function Canvas() {
     }
   }, []);
 
-  const isLight = canvasTheme === 'light';
+  const isLight = theme === 'light';
   const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)';
-  const bgColor = isLight ? '#F8F9FA' : '#0B0D17';
+  const bgColor = isLight ? '#FFFFFF' : '#050505';
 
   return (
     <div 

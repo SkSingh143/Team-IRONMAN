@@ -137,7 +137,7 @@ export default function RoomPage() {
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* ---- Left Toolbar (Vertical Tabs for layout >= md) ---- */}
-        <aside className="hidden md:flex flex-col items-center w-20 bg-surface border-r border-border py-6 gap-4 shrink-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+        <aside className="hidden md:flex flex-col items-center w-20 bg-[#0D0D0F] border-r border-[rgba(255,255,255,0.1)] py-6 gap-4 shrink-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.4)] text-gray-200">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -147,7 +147,7 @@ export default function RoomPage() {
                 <button
                   onClick={() => setTab(tab.key)}
                   title={isRestricted ? `${tab.label} — Disabled by Admin` : tab.label}
-                  className={`relative w-full aspect-square flex items-center justify-center rounded-2xl transition-all ${isActive ? 'bg-primary/10 text-primary shadow-inner shadow-primary/20' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
+                  className={`relative w-full aspect-square flex items-center justify-center rounded-2xl transition-all ${isActive ? 'bg-primary/20 text-primary shadow-inner shadow-primary/20' : 'text-gray-400 hover:bg-[#151518] hover:text-white'}`}
                 >
                   <Icon className={`w-6 h-6 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform ${isRestricted ? 'opacity-50' : ''}`} />
                   {tab.key === 'poll' && polls.length > 0 && (
@@ -163,18 +163,18 @@ export default function RoomPage() {
             );
           })}
           
-          <div className="w-10 h-px bg-border my-2" />
+          <div className="w-10 h-px bg-[rgba(255,255,255,0.1)] my-2" />
           
           <div className="w-full px-3 mt-auto relative">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               title="Toggle Members Sidebar"
-              className="w-full aspect-square flex items-center justify-center rounded-2xl text-gray-400 hover:bg-surface-elevated hover:text-white transition-colors relative group"
+              className="w-full aspect-square flex items-center justify-center rounded-2xl text-gray-400 hover:bg-[#151518] hover:text-white transition-colors relative group"
             >
               <Users className="w-6 h-6 group-hover:scale-110 transition-transform" />
               <span className="absolute bottom-2 right-2 flex w-3 h-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-surface"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-[#0D0D0F]"></span>
               </span>
             </button>
           </div>
@@ -184,7 +184,7 @@ export default function RoomPage() {
         <main className="flex-1 flex flex-col min-w-0 bg-root relative overflow-hidden">
           
           {/* Mobile Top Tab Bar (Visible on <md) */}
-          <div className="md:hidden flex items-center bg-surface border-b border-border p-2 gap-1 overflow-x-auto hide-scrollbar z-30 shrink-0">
+          <div className="md:hidden flex items-center bg-[#0D0D0F] border-b border-[rgba(255,255,255,0.1)] p-2 gap-1 overflow-x-auto hide-scrollbar z-30 shrink-0 text-gray-200">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.key;
@@ -192,7 +192,7 @@ export default function RoomPage() {
                 <button
                   key={tab.key}
                   onClick={() => setTab(tab.key)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap text-sm font-semibold transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap text-sm font-semibold transition-colors ${isActive ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:bg-[#151518] hover:text-white'}`}
                 >
                   <Icon className="w-4 h-4" />
                   {tab.label}
@@ -246,18 +246,18 @@ export default function RoomPage() {
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 400, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed md:static inset-y-0 right-0 w-80 bg-surface-elevated border-l border-border flex flex-col z-50 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.3)]"
+                className="fixed md:static inset-y-0 right-0 w-80 bg-[#131315] border-l border-[rgba(255,255,255,0.1)] flex flex-col z-50 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.3)] text-gray-200"
               >
-                <div className="p-6 border-b border-border flex items-center justify-between">
+                <div className="p-6 border-b border-[rgba(255,255,255,0.1)] flex items-center justify-between">
                   <h3 className="font-bold text-white text-lg">Room Details</h3>
                   <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-gray-400 hover:text-white">
                     <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="p-5 border-b border-border">
+                <div className="p-5 border-b border-[rgba(255,255,255,0.1)]">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Invite Link</div>
-                  <div className="flex items-center gap-2 bg-surface-input border border-border rounded-lg p-1.5 focus-within:border-primary transition-colors">
+                  <div className="flex items-center gap-2 bg-[#171719] border border-[rgba(255,255,255,0.1)] rounded-lg p-1.5 focus-within:border-primary transition-colors">
                     <input
                       readOnly
                       value={inviteLink}
@@ -266,7 +266,7 @@ export default function RoomPage() {
                     />
                     <button 
                       onClick={handleCopyInvite}
-                      className={`p-1.5 rounded-md transition-colors ${copied ? 'bg-primary/20 text-primary' : 'bg-surface-elevated text-gray-400 hover:text-white'}`}
+                      className={`p-1.5 rounded-md transition-colors ${copied ? 'bg-primary/20 text-primary' : 'bg-[#0D0D0F] text-gray-400 hover:text-white'}`}
                       title="Copy link"
                     >
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -276,7 +276,7 @@ export default function RoomPage() {
 
                 <div className="p-5 flex-1 overflow-y-auto">
                   {isAdmin && (
-                    <div className="mb-4 p-3 bg-surface border border-border rounded-lg flex items-center justify-between">
+                    <div className="mb-4 p-3 bg-[#0D0D0F] border border-[rgba(255,255,255,0.1)] rounded-lg flex items-center justify-between">
                       <div className="text-xs font-semibold text-gray-300">Allow Global Participation</div>
                       <button 
                         onClick={async () => {
@@ -305,10 +305,10 @@ export default function RoomPage() {
                         const isMe = m.userId === user?._id;
                         const initials = (m.username || '??').slice(0, 2).toUpperCase();
                         return (
-                          <div key={m.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface transition-colors group">
+                          <div key={m.userId} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#0D0D0F] transition-colors group">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-dark to-primary flex items-center justify-center text-white text-xs font-bold shadow-sm relative shrink-0">
                               {initials}
-                              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-surface-elevated rounded-full"></span>
+                              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#131315] rounded-full"></span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-gray-200 truncate group-hover:text-white transition-colors">
