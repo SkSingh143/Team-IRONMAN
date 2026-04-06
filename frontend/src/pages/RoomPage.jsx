@@ -11,6 +11,8 @@ import Navbar from '../components/common/Navbar';
 import Canvas from '../components/canvas/Canvas';
 import Toolbar from '../components/canvas/Toolbar';
 import CursorOverlay from '../components/canvas/CursorOverlay';
+import CodePanel from '../components/code/CodePanel';
+import PollPanel from '../components/poll/PollPanel';
 import '../styles/room.css';
 
 // Tab icons
@@ -225,27 +227,8 @@ export default function RoomPage() {
                 <CursorOverlay />
               </>
             )}
-            {activeTab === 'code' && (
-              <div className="room-content-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <polyline points="16 18 22 12 16 6" />
-                  <polyline points="8 6 2 12 8 18" />
-                </svg>
-                <h3>Code Panel</h3>
-                <p>Share code snippets with syntax highlighting. Coming in Phase 4.</p>
-              </div>
-            )}
-            {activeTab === 'poll' && (
-              <div className="room-content-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                <h3>Live Polls</h3>
-                <p>Create and vote on polls in real-time. Coming in Phase 4.</p>
-              </div>
-            )}
+            {activeTab === 'code' && <CodePanel />}
+            {activeTab === 'poll' && <PollPanel />}
             {activeTab === 'voice' && (
               <div className="room-content-placeholder">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
