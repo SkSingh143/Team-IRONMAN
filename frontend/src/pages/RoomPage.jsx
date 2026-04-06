@@ -276,18 +276,18 @@ export default function RoomPage() {
 
                 <div className="p-5 flex-1 overflow-y-auto">
                   {isAdmin && (
-                    <div className="mb-4 p-3 bg-[#0D0D0F] border border-[rgba(255,255,255,0.1)] rounded-lg flex items-center justify-between">
-                      <div className="text-xs font-semibold text-gray-300">Allow Global Participation</div>
+                    <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-[rgba(255,255,255,0.1)] bg-[#0D0D0F] p-4">
+                      <div className="text-sm font-semibold leading-snug text-gray-200">Allow Global Participation</div>
                       <button 
                         onClick={async () => {
                           try {
                             await toggleAllPermissions(roomId, !allowAllPermissions);
                           } catch (e) { toast.error("Failed"); }
                         }}
-                        className={`w-10 h-5 rounded-full relative transition-colors ${allowAllPermissions ? 'bg-primary' : 'bg-gray-600'}`}
+                        className={`relative h-7 w-14 rounded-full transition-colors ${allowAllPermissions ? 'bg-primary' : 'bg-gray-600'}`}
                         title="Give permission to ALL users"
                       >
-                        <span className={`absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-transform ${allowAllPermissions ? 'translate-x-5' : ''}`}></span>
+                        <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${allowAllPermissions ? 'translate-x-7' : ''}`}></span>
                       </button>
                     </div>
                   )}
@@ -318,19 +318,19 @@ export default function RoomPage() {
                                 <div className="text-[10px] uppercase font-bold tracking-wider text-accent mt-0.5">{m.role}</div>
                               ) : (
                                 isAdmin && !isMe && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <label className="flex items-center gap-1 cursor-pointer">
+                                  <div className="mt-2 flex items-center gap-3">
+                                    <label className="flex cursor-pointer items-center gap-2">
                                       <input 
                                         type="checkbox" 
                                         checked={m.canParticipate || false} 
                                         onChange={() => handleToggleMember(m.userId, m.canParticipate)} 
-                                        className="w-3 h-3 cursor-pointer accent-primary" 
+                                        className="h-4 w-4 cursor-pointer accent-primary" 
                                       />
-                                      <span className="text-[10px] text-gray-400">Permit</span>
+                                      <span className="text-xs font-medium text-gray-300">Permit</span>
                                     </label>
                                     <button 
                                       onClick={() => handleBan(m.userId)} 
-                                      className="text-[10px] text-red-400 hover:bg-red-400/20 px-1.5 rounded transition"
+                                      className="rounded px-2 py-0.5 text-xs text-red-400 transition hover:bg-red-400/20"
                                     >
                                       Ban
                                     </button>

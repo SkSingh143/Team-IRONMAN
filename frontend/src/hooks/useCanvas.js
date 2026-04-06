@@ -18,6 +18,11 @@ export function useCanvas(canvasRef) {
   const elements = useRoomStore(s => s.elements);
   const roomId = useRoomStore(s => s.roomId);
   const addElement = useRoomStore(s => s.addElement);
+  const members = useRoomStore(s => s.members);
+  const allowAllPermissions = useRoomStore(s => s.allowAllPermissions);
+  const myUserId = useAuthStore(s => s.user?._id);
+  const currentMember = members.find(m => m.userId === myUserId);
+  const hasPermission = currentMember?.role === 'admin' || currentMember?.canParticipate || allowAllPermissions;
 
   // Get canvas 2D context
   const getCtx = useCallback(() => {
@@ -106,12 +111,13 @@ export function useCanvas(canvasRef) {
   // --- Pointer Event Handlers ---
 
   const onPointerDown = useCallback((e) => {
+    if (!hasPermission) return;
     const ctx = getCtx();
     if (!ctx) return;
     isDrawing.current = true;
     const pos = getPos(e);
     currentPoints.current = [[pos.x, pos.y]];
-  }, [getCtx, getPos]);
+  }, [getCtx, getPos, hasPermission]);
 
   const onPointerMove = useCallback((e) => {
     const pos = getPos(e);
@@ -125,7 +131,7 @@ export function useCanvas(canvasRef) {
       wsManager.send('cursor_move', { x: pos.x, y: pos.y, username }, roomId);
     }
 
-    if (!isDrawing.current) return;
+    if (!isDrawing.current || !hasPermission) return;
 
     const ctx = getCtx();
     if (!ctx) return;
@@ -157,10 +163,15 @@ export function useCanvas(canvasRef) {
       };
       drawShape(ctx, tempShape);
     }
-  }, [getCtx, getPos, drawLiveSegment, redrawAll, activeTool, activeColor, lineWidth, roomId]);
+  }, [getCtx, getPos, drawLiveSegment, redrawAll, activeTool, activeColor, lineWidth, roomId, hasPermission]);
 
   const onPointerUp = useCallback(() => {
     if (!isDrawing.current) return;
+    if (!hasPermission) {
+      isDrawing.current = false;
+      currentPoints.current = [];
+      return;
+    }
     isDrawing.current = false;
 
     const pts = currentPoints.current;
@@ -208,7 +219,7 @@ export function useCanvas(canvasRef) {
     wsManager.send('draw', element, roomId);
 
     currentPoints.current = [];
-  }, [activeColor, lineWidth, activeTool, canvasTheme, roomId, addElement]);
+  }, [activeColor, lineWidth, activeTool, canvasTheme, roomId, addElement, hasPermission]);
 
   const onPointerLeave = useCallback(() => {
     if (isDrawing.current) {
