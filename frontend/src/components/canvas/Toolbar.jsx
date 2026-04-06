@@ -3,7 +3,7 @@ import useRoomStore from '../../store/roomStore';
 import useAuthStore from '../../store/authStore';
 import { wsManager } from '../../utils/wsManager';
 import { motion } from 'framer-motion';
-import { PenTool, Eraser, Undo, Circle, MousePointer2 } from 'lucide-react';
+import { PenTool, Eraser, Undo, Moon, Sun } from 'lucide-react';
 
 const PRESET_COLORS = [
   '#FFFFFF', '#FF6B6B', '#FFA94D', '#FFD43B',
@@ -14,7 +14,7 @@ const PRESET_COLORS = [
 const SIZES = [2, 4, 6, 8, 12, 16];
 
 export default function Toolbar() {
-  const { activeTool, activeColor, lineWidth, setTool, setColor, setLineWidth } = useUIStore();
+  const { activeTool, activeColor, lineWidth, canvasTheme, setTool, setColor, setLineWidth, toggleTheme } = useUIStore();
   const undoElement = useRoomStore(s => s.undoElement);
   const myUserId = useAuthStore(s => s.user?._id);
 
@@ -26,10 +26,19 @@ export default function Toolbar() {
     <motion.div 
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-end gap-3 p-3 bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-20 max-w-[95vw] overflow-x-auto hide-scrollbar"
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-4 p-3 bg-surface/90 backdrop-blur-xl border border-border rounded-2xl shadow-2xl z-20 max-w-[95vw] overflow-x-auto hide-scrollbar"
     >
+      {/* Board Theme */}
+      <div className="flex flex-col items-center justify-center px-2 border-r border-border shrink-0">
+         <ToolBtn 
+            onClick={toggleTheme} 
+            icon={canvasTheme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-400" />} 
+            title="Toggle Board Theme"
+          />
+      </div>
+
       {/* Tools */}
-      <div className="flex flex-col gap-2 px-3 border-r border-border min-w-fit">
+      <div className="flex flex-col gap-2 px-3 border-r border-border shrink-0">
         <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 pl-1">Tool</span>
         <div className="flex gap-1">
           <ToolBtn 

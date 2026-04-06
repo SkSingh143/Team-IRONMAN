@@ -1,8 +1,10 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useCanvas } from '../../hooks/useCanvas';
+import useUIStore from '../../store/uiStore';
 
 export default function Canvas() {
   const canvasRef = useRef(null);
+  const canvasTheme = useUIStore(s => s.canvasTheme);
   const {
     onPointerDown,
     onPointerMove,
@@ -10,17 +12,44 @@ export default function Canvas() {
     onPointerLeave,
   } = useCanvas(canvasRef);
 
+  // Center exactly in the middle of the 5000x5000 canvas on mount
+  const containerRef = useRef(null);
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 2500 - window.innerHeight / 2;
+      containerRef.current.scrollLeft = 2500 - window.innerWidth / 2;
+    }
+  }, []);
+
+  const isLight = canvasTheme === 'light';
+  const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)';
+  const bgColor = isLight ? '#F8F9FA' : '#0B0D17';
+
   return (
-    <div className="relative w-full h-full overflow-hidden bg-root">
-      <canvas
-        ref={canvasRef}
-        className="block cursor-crosshair bg-root"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerLeave}
-        style={{ touchAction: 'none' }}
-      />
+    <div 
+      ref={containerRef}
+      className="relative w-full h-full overflow-auto hide-scrollbar"
+      style={{ backgroundColor: bgColor }}
+    >
+      <div 
+        className="relative" 
+        style={{ 
+          width: '5000px', 
+          height: '5000px',
+          backgroundImage: `radial-gradient(circle, ${gridColor} 1.5px, transparent 1.5px)`,
+          backgroundSize: '30px 30px',
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 cursor-crosshair"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerLeave}
+          style={{ touchAction: 'none' }}
+        />
+      </div>
     </div>
   );
 }

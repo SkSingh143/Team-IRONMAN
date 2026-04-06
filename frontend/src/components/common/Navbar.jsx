@@ -26,7 +26,7 @@ export default function Navbar({ roomName, roomId }) {
   };
 
   return (
-    <nav className="h-14 flex items-center justify-between px-4 bg-surface border-b border-border shrink-0 z-40 relative">
+    <nav className="h-16 flex items-center justify-between px-6 bg-surface border-b border-border shrink-0 z-40 relative shadow-sm">
       <div className="flex items-center gap-4">
         {/* Brand */}
         <Link to="/dashboard" className="flex items-center gap-2 text-white font-bold text-lg hover:opacity-80 transition-opacity">
@@ -40,12 +40,12 @@ export default function Navbar({ roomName, roomId }) {
 
         {roomId && (
           <>
-            <div className="w-px h-6 bg-border mx-2" />
-            <div className="flex items-center gap-3">
-              <span className="font-medium text-white truncate max-w-[120px] sm:max-w-xs">{roomName || 'Untitled Room'}</span>
+            <div className="w-px h-8 bg-border mx-2" />
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-white tracking-wide truncate max-w-[120px] sm:max-w-xs">{roomName || 'Untitled Room'}</span>
               <button 
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 px-2 py-1 bg-surface-elevated hover:bg-surface-elevated/80 border border-border rounded text-xs font-medium text-gray-300 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-elevated hover:bg-surface-elevated/80 border border-border rounded-lg text-xs font-semibold text-gray-300 transition-colors shadow-sm"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
                 <span className="hidden sm:inline">{roomId}</span>
@@ -55,14 +55,14 @@ export default function Navbar({ roomName, roomId }) {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         {roomId && (
-          <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-medium mr-2">
+          <Link to="/dashboard" className="text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-semibold mr-1">
             <Home className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
         )}
-        <div className="flex items-center gap-3 pl-4 border-l border-border">
+        <div className="flex items-center gap-4 pl-6 border-l border-border">
           <div className="flex flex-col items-end hidden sm:flex">
             <span className="text-sm font-semibold text-white leading-none">{user?.username}</span>
             <span className="text-xs text-gray-500">{user?.email}</span>

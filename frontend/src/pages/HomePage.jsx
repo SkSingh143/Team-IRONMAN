@@ -2,9 +2,19 @@ import { Link, Navigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import { motion } from 'framer-motion';
 import { PenTool, Code, BarChart2, Mic } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -29,12 +39,21 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-root overflow-hidden relative text-gray-200">
-      {/* Background glow effects */}
-      <div className="absolute top-[20%] left-[10%] w-[400px] h-[400px] bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-accent/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* Interactive Cursor Glow */}
+      <motion.div
+        className="fixed top-0 left-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] pointer-events-none z-0"
+        animate={{
+          x: mousePos.x - 300,
+          y: mousePos.y - 300,
+        }}
+        transition={{ type: 'spring', damping: 40, stiffness: 200, mass: 0.5 }}
+      />
+
+      {/* Background static blobs */}
+      <div className="absolute top-[10%] right-[10%] w-[400px] h-[400px] bg-accent/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* Navbar */}
-      <nav className="absolute top-0 left-0 w-full z-50 flex items-center justify-between p-6 md:px-12">
+      <nav className="relative z-50 flex items-center justify-between p-6 md:px-12 md:py-8">
         <div className="flex items-center gap-3 text-xl font-bold text-white">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-primary, #6C63FF)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
             <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -51,17 +70,17 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <motion.section 
-        className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-40 pb-32 min-h-[80vh]"
+        className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-32 pb-40 min-h-[85vh]"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
       >
-        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-semibold mb-8 uppercase tracking-wide">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+        <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-5 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-bold mb-10 uppercase tracking-wide shadow-lg shadow-primary/5">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
           Now in Beta
         </motion.div>
 
-        <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-white mb-6 max-w-4xl">
+        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight text-white mb-8 max-w-5xl">
           Your workspace, <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
             synchronized in real-time.

@@ -113,38 +113,41 @@ export default function RoomPage() {
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* ---- Left Toolbar (Vertical Tabs for layout >= md) ---- */}
-        <aside className="hidden md:flex flex-col items-center w-16 bg-surface border-r border-border py-4 gap-2 shrink-0 z-30">
+        <aside className="hidden md:flex flex-col items-center w-20 bg-surface border-r border-border py-6 gap-4 shrink-0 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
-              <button
-                key={tab.key}
-                onClick={() => setTab(tab.key)}
-                title={tab.label}
-                className={`relative p-3 rounded-xl transition-all group ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
-                {tab.key === 'poll' && polls.length > 0 && (
-                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-accent rounded-full border-2 border-surface"></span>
-                )}
-              </button>
+              <div key={tab.key} className="relative group w-full px-3">
+                <button
+                  onClick={() => setTab(tab.key)}
+                  title={tab.label}
+                  className={`relative w-full aspect-square flex items-center justify-center rounded-2xl transition-all ${isActive ? 'bg-primary/10 text-primary shadow-inner shadow-primary/20' : 'text-gray-400 hover:bg-surface-elevated hover:text-white'}`}
+                >
+                  <Icon className={`w-6 h-6 ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`} />
+                  {tab.key === 'poll' && polls.length > 0 && (
+                    <span className="absolute top-2 right-2 w-3 h-3 bg-accent rounded-full border-2 border-surface"></span>
+                  )}
+                </button>
+              </div>
             );
           })}
           
-          <div className="w-8 h-px bg-border my-2" />
+          <div className="w-10 h-px bg-border my-2" />
           
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            title="Toggle Members Sidebar"
-            className="p-3 rounded-xl text-gray-400 hover:bg-surface-elevated hover:text-white transition-colors mt-auto relative"
-          >
-            <Users className="w-5 h-5" />
-            <span className="absolute bottom-2 right-2 flex w-2.5 h-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-surface"></span>
-            </span>
-          </button>
+          <div className="w-full px-3 mt-auto relative">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              title="Toggle Members Sidebar"
+              className="w-full aspect-square flex items-center justify-center rounded-2xl text-gray-400 hover:bg-surface-elevated hover:text-white transition-colors relative group"
+            >
+              <Users className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <span className="absolute bottom-2 right-2 flex w-3 h-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-surface"></span>
+              </span>
+            </button>
+          </div>
         </aside>
 
         {/* ---- Main Content Area ---- */}
@@ -202,13 +205,13 @@ export default function RoomPage() {
               />
               
               <motion.aside
-                initial={{ x: 300, opacity: 0 }}
+                initial={{ x: 400, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 300, opacity: 0 }}
+                exit={{ x: 400, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed md:static inset-y-0 right-0 w-72 bg-surface-elevated border-l border-border flex flex-col z-50 shrink-0 shadow-2xl"
+                className="fixed md:static inset-y-0 right-0 w-80 bg-surface-elevated border-l border-border flex flex-col z-50 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.3)]"
               >
-                <div className="p-5 border-b border-border flex items-center justify-between">
+                <div className="p-6 border-b border-border flex items-center justify-between">
                   <h3 className="font-bold text-white text-lg">Room Details</h3>
                   <button onClick={() => setSidebarOpen(false)} className="md:hidden p-1 text-gray-400 hover:text-white">
                     <ChevronRight className="w-5 h-5" />

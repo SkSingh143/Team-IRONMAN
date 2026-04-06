@@ -12,6 +12,7 @@ export function useCanvas(canvasRef) {
 
   const activeTool = useUIStore(s => s.activeTool);
   const activeColor = useUIStore(s => s.activeColor);
+  const canvasTheme = useUIStore(s => s.canvasTheme);
   const lineWidth = useUIStore(s => s.lineWidth);
   const elements = useRoomStore(s => s.elements);
   const roomId = useRoomStore(s => s.roomId);
@@ -22,18 +23,16 @@ export function useCanvas(canvasRef) {
     return canvasRef.current?.getContext('2d');
   }, [canvasRef]);
 
-  // Get mouse/touch position relative to canvas
+  // Get mouse/touch position relative to canvas without double DPR scaling
   const getPos = useCallback((e) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: (clientX - rect.left),
+      y: (clientY - rect.top),
     };
   }, [canvasRef]);
 
@@ -43,7 +42,9 @@ export function useCanvas(canvasRef) {
 
     ctx.save();
     ctx.beginPath();
-    ctx.strokeStyle = stroke.tool === 'eraser' ? '#0B0D17' : stroke.color;
+    ctx.strokeStyle = stroke.tool === 'eraser' 
+      ? (stroke.theme === 'light' ? '#F8F9FA' : '#0B0D17') 
+      : stroke.color;
     ctx.lineWidth = stroke.tool === 'eraser' ? stroke.lineWidth * 3 : stroke.lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -90,16 +91,14 @@ export function useCanvas(canvasRef) {
     redrawAll();
   }, [elements, redrawAll]);
 
-  // Resize canvas to fill container
+  // Setup massive scrollable canvas sizing
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const parent = canvas.parentElement;
-    if (!parent) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const w = parent.clientWidth;
-    const h = parent.clientHeight;
+    const w = 5000;
+    const h = 5000;
 
     canvas.width = w * dpr;
     canvas.height = h * dpr;
@@ -123,7 +122,9 @@ export function useCanvas(canvasRef) {
   const drawLiveSegment = useCallback((ctx, from, to) => {
     ctx.save();
     ctx.beginPath();
-    ctx.strokeStyle = activeTool === 'eraser' ? '#0B0D17' : activeColor;
+    ctx.strokeStyle = activeTool === 'eraser' 
+      ? (canvasTheme === 'light' ? '#F8F9FA' : '#0B0D17') 
+      : activeColor;
     ctx.lineWidth = activeTool === 'eraser' ? lineWidth * 3 : lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -186,6 +187,7 @@ export function useCanvas(canvasRef) {
       color: activeColor,
       lineWidth: lineWidth,
       tool: activeTool,
+      theme: canvasTheme,
       userId,
     };
 

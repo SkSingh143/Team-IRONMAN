@@ -6,6 +6,7 @@ const useUIStore = create((set) => ({
   activeColor: '#FFFFFF',
   lineWidth: 3,
   activeTab: 'canvas',      // 'canvas' | 'code' | 'poll' | 'voice'
+  canvasTheme: 'dark',      // 'dark' | 'light' board background
   cursors: {},               // { userId: { x, y, username } }
   toasts: [],
 
@@ -22,6 +23,7 @@ const useUIStore = create((set) => ({
   setColor: (color) => set({ activeColor: color }),
   setLineWidth: (w) => set({ lineWidth: w }),
   setTab: (tab) => set({ activeTab: tab }),
+  toggleTheme: () => set(s => ({ canvasTheme: s.canvasTheme === 'dark' ? 'light' : 'dark' })),
 
   updateCursor: (userId, data) => set(s => ({
     cursors: { ...s.cursors, [userId]: data }
