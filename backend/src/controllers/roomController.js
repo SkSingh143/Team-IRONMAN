@@ -38,6 +38,16 @@ exports.create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+// GET /api/rooms/me/history
+exports.getHistory = async (req, res, next) => {
+  try {
+    const rooms = await Room.find({ adminId: req.userId })
+      .sort({ createdAt: -1 })
+      .select('roomId name createdAt');
+    res.json(rooms);
+  } catch (err) { next(err); }
+};
+
 // GET /api/rooms/:roomId
 exports.getRoom = async (req, res, next) => {
   try {

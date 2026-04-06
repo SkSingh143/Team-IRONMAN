@@ -47,6 +47,9 @@ const useRoomStore = create((set, get) => ({
   }),
 
   addPoll: (poll) => set(s => ({ polls: [...s.polls, poll] })),
+  removePoll: (pollId) => set(s => ({
+    polls: s.polls.filter(p => p.pollId !== pollId)
+  })),
   updatePoll: (updatedPoll) => set(s => ({
     polls: s.polls.map(p => p.pollId === updatedPoll.pollId ? updatedPoll : p)
   })),

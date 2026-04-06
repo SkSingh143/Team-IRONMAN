@@ -75,4 +75,29 @@ const handlePollVote = async (ws, data, roomId, userId) => {
   }
 };
 
-module.exports = { handlePollCreate, handlePollVote };
+const handlePollDelete = async (ws, data, roomId, userId) => {
+  const { pollId } = data;
+
+  try {
+    // We only enforce room id matching here, the main wsServer ensures general modifying permission limits
+    // but we can additionally ensure only the creator or admin can delete. 
+    // In our case `admin` has overall modify permissions.
+    await Poll.deleteOne({ pollId, roomId });
+
+    // Broadcast deletion
+    const room = roomSessions.get(roomId);
+    if (room) {
+      const message = JSON.stringify({
+        type: 'poll_deleted',
+        data: { pollId }
+      });
+      for (const clientWs of room.clients.keys()) {
+        if (clientWs.readyState === 1) clientWs.send(message);
+      }
+    }
+  } catch (err) {
+    console.error('Error deleting poll:', err);
+  }
+};
+
+module.exports = { handlePollCreate, handlePollVote, handlePollDelete };

@@ -1,12 +1,12 @@
 // src/pages/DashboardPage.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { createRoom } from '../api/roomApi';
+import { createRoom, getMyHistory } from '../api/roomApi';
 import { useToast } from '../components/common/Toast';
 import Navbar from '../components/common/Navbar';
 import { motion } from 'framer-motion';
-import { Plus, Users, ArrowRight, Loader2 } from 'lucide-react';
+import { Plus, Users, ArrowRight, Loader2, Clock } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -17,6 +17,22 @@ export default function DashboardPage() {
   const [roomName, setRoomName] = useState('');
   const [joinRoomId, setJoinRoomId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const { data } = await getMyHistory();
+        setHistory(data);
+      } catch (err) {
+        console.error('Failed to load history', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   const handleCreateRoom = async (e) => {
     e.preventDefault();
@@ -50,35 +66,58 @@ export default function DashboardPage() {
     <div className="min-h-screen flex flex-col bg-root text-gray-200">
       <Navbar />
 
-      <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative h-full">
         {/* Background blobs */}
         <div className="absolute top-[20%] right-[20%] w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-[20%] left-[20%] w-[300px] h-[300px] bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 items-start relative z-10 my-auto pt-10 pb-10">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
+            className="flex flex-col gap-8"
           >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
-              Welcome, <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                {user?.username}
-              </span>
-            </h1>
-            <p className="text-gray-400 text-lg mb-8 max-w-md">
-              Create a new workspace to start collaborating, or join an existing room using an invite code.
-            </p>
-
-            <div className="bg-surface-elevated/50 border border-border p-6 rounded-2xl">
-              <div className="flex items-center gap-3 mb-2">
-                <Users className="w-5 h-5 text-accent" />
-                <h3 className="text-white font-semibold flex-1">Pro Tip</h3>
-              </div>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Rooms are ephemeral by nature. Make sure to download your canvas or copy your code snippets before everyone leaves the room!
+            <div>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+                Welcome, <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
+                  {user?.username}
+                </span>
+              </h1>
+              <p className="text-gray-400 text-lg mb-8 max-w-md">
+                Create a new workspace to start collaborating, or join an existing room using an invite code.
               </p>
+            </div>
+
+            {/* History Section */}
+            <div className="bg-surface-elevated/50 border border-border p-5 rounded-3xl flex-1 flex flex-col min-h-[220px]">
+              <div className="flex items-center gap-3 mb-4">
+                <Clock className="w-5 h-5 text-accent" />
+                <h3 className="text-white font-bold flex-1">Your Recent Rooms</h3>
+              </div>
+              
+              <div className="space-y-3 overflow-y-auto pr-2 max-h-[160px] custom-scrollbar">
+               {loadingHistory ? (
+                 <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 text-gray-400 animate-spin" /></div>
+               ) : history.length === 0 ? (
+                 <p className="text-sm text-gray-500 text-center py-4">You haven't created any rooms yet.</p>
+               ) : (
+                 history.map(room => (
+                   <button 
+                     key={room.roomId}
+                     onClick={() => navigate(`/room/${room.roomId}`)}
+                     className="w-full flex items-center justify-between p-3 bg-surface hover:bg-surface-elevated border border-border rounded-xl transition-all group text-left"
+                   >
+                     <div className="flex-1 min-w-0 pr-2">
+                       <h4 className="text-sm font-bold text-gray-200 truncate group-hover:text-white transition-colors">{room.name}</h4>
+                       <p className="text-[10px] text-gray-500 uppercase font-mono mt-0.5">{room.roomId}</p>
+                     </div>
+                     <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                   </button>
+                 ))
+               )}
+              </div>
             </div>
           </motion.div>
 
@@ -86,7 +125,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="glass-panel p-2 rounded-3xl"
+            className="glass-panel p-2 rounded-3xl sticky top-24"
           >
             {/* Tabs */}
             <div className="flex p-1 mb-6 bg-surface-input rounded-2xl">
@@ -142,7 +181,7 @@ export default function DashboardPage() {
                     <input
                       type="text"
                       className="w-full px-4 py-3 bg-surface-input border border-border rounded-xl text-white placeholder-gray-500 font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors uppercase"
-                      placeholder="Enter the 11-character code"
+                      placeholder="Enter the 5-Character code"
                       value={joinRoomId}
                       onChange={(e) => setJoinRoomId(e.target.value)}
                       autoFocus

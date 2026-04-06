@@ -7,9 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart2, Plus, X, CheckCircle2 } from 'lucide-react';
 
 export default function PollPanel() {
-  const { polls, roomId } = useRoomStore();
+  const { polls, roomId, members } = useRoomStore();
   const { user } = useAuthStore();
   const toast = useToast();
+
+  const isAdmin = members.find(m => m.userId === user?._id)?.role === 'admin';
 
   const [showCreate, setShowCreate] = useState(false);
   const [question, setQuestion] = useState('');
@@ -48,6 +50,11 @@ export default function PollPanel() {
     if (votedPolls.has(pollId)) return;
     wsManager.send('poll_vote', { pollId, optionId }, roomId);
     setVotedPolls(prev => new Set(prev).add(pollId));
+  };
+
+  const handleDeletePoll = (pollId) => {
+    if (!window.confirm("Are you sure you want to delete this poll?")) return;
+    wsManager.send('poll_delete', { pollId }, roomId);
   };
 
   const getTotalVotes = (poll) => poll.options.reduce((sum, opt) => sum + (opt.votes || 0), 0);
@@ -142,9 +149,18 @@ export default function PollPanel() {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 key={poll.pollId} 
-                className="bg-surface border border-border rounded-2xl p-6"
+                className="bg-surface border border-border rounded-2xl p-6 relative group/poll"
               >
-                <h4 className="text-lg font-bold text-white mb-2">{poll.question}</h4>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDeletePoll(poll.pollId)}
+                    className="absolute top-4 right-4 p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover/poll:opacity-100"
+                    title="Delete Poll"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <h4 className="text-lg font-bold text-white mb-2 pr-6">{poll.question}</h4>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-gray-400">{totalVotes} vote{totalVotes!==1?'s':''}</span>
                   {hasVoted && <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full"><CheckCircle2 className="w-3.5 h-3.5"/> Voted</span>}

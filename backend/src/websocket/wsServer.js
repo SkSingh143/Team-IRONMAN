@@ -11,7 +11,7 @@ const Poll = require('../models/Poll');
 const { handleDraw, handleDeleteElement, handleClearCanvas } = require('./handlers/drawHandler');
 const { handleCursorMove } = require('./handlers/cursorHandler');
 const { handleCodeShare } = require('./handlers/codeHandler');
-const { handlePollCreate, handlePollVote } = require('./handlers/pollHandler');
+const { handlePollCreate, handlePollVote, handlePollDelete } = require('./handlers/pollHandler');
 const { handleVoiceSignal } = require('./handlers/voiceHandler');
 
 const initWS = (server) => {
@@ -105,7 +105,7 @@ const initWS = (server) => {
           const modifyingActions = [
             'draw', 'delete_element', 'clear_canvas', 
             'code_share', 
-            'poll_create', 
+            'poll_create', 'poll_delete', 
             'voice_join', 'webrtc_offer', 'webrtc_answer', 'webrtc_ice', 'voice_mute_toggle'
           ];
 
@@ -143,6 +143,9 @@ const initWS = (server) => {
               break;
             case 'poll_vote':
               await handlePollVote(ws, payload.data, roomId, userId);
+              break;
+            case 'poll_delete':
+              await handlePollDelete(ws, payload.data, roomId, userId);
               break;
             case 'webrtc_offer':
             case 'webrtc_answer':

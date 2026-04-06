@@ -6,6 +6,9 @@ import api from '../utils/axiosInstance';
 // Returns: { roomId, name, adminId, inviteLink, createdAt }
 export const createRoom = (name) => api.post('/api/rooms', { name });
 
+// GET /api/rooms/me/history
+export const getMyHistory = () => api.get('/api/rooms/me/history');
+
 // GET /api/rooms/:roomId
 // Returns: { roomId, name, adminId, members: [{userId, username, role}], elementCount }
 export const getRoom = (roomId) => api.get(`/api/rooms/${roomId}`);

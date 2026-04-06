@@ -16,6 +16,7 @@ export function useWebSocket(roomId) {
     setMembers,
     addPoll,
     updatePoll,
+    removePoll,
     setCode,
   } = useRoomStore();
 
@@ -69,6 +70,9 @@ export function useWebSocket(roomId) {
     });
     wsManager.on('poll_updated', (payload) => {
       if (payload?.poll) updatePoll(payload.poll);
+    });
+    wsManager.on('poll_deleted', (payload) => {
+      if (payload?.pollId) removePoll(payload.pollId);
     });
 
     // Code

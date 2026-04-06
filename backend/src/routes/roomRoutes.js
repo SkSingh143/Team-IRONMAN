@@ -7,6 +7,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 router.use(authMiddleware);
 
 router.post('/', body('name').notEmpty().isLength({ max: 80 }), roomController.create);
+router.get('/me/history', roomController.getHistory);
 router.get('/:roomId', roomController.getRoom);
 router.delete('/:roomId', roomController.deleteRoom);
 router.post('/:roomId/ban', body('userId').notEmpty(), roomController.banUser);
