@@ -6,6 +6,9 @@ const roomSessions = require('./roomSessions');
 // Handlers
 const { handleDraw, handleDeleteElement } = require('./handlers/drawHandler');
 const { handleCursorMove } = require('./handlers/cursorHandler');
+const { handleCodeShare } = require('./handlers/codeHandler');
+const { handlePollCreate, handlePollVote } = require('./handlers/pollHandler');
+const { handleVoiceSignal } = require('./handlers/voiceHandler');
 
 const initWS = (server) => {
   const wss = new WebSocketServer({ noServer: true });
@@ -65,7 +68,18 @@ const initWS = (server) => {
           case 'cursor_move':
             handleCursorMove(ws, payload.data, roomId, userId);
             break;
-          // other handlers (poll, code, voice) will be added in Phase 5
+          case 'code_share':
+            await handleCodeShare(ws, payload.data, roomId, userId);
+            break;
+          case 'poll_create':
+            await handlePollCreate(ws, payload.data, roomId, userId);
+            break;
+          case 'poll_vote':
+            await handlePollVote(ws, payload.data, roomId, userId);
+            break;
+          case 'voice_signal':
+            handleVoiceSignal(ws, payload.data, roomId, userId);
+            break;
           default:
             console.warn('Unknown message type:', payload.type);
         }
