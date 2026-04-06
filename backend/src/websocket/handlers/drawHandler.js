@@ -23,22 +23,30 @@ const handleDraw = async (ws, data, roomId, userId) => {
   try {
     const existing = await Element.findOne({ elementId });
     if (existing) {
-      // Append points if it's the same stroke
-      if (points && points.length > 0) {
+      if (data.type === 'stroke' && points && points.length > 0) {
         existing.points.push(...points);
+        // Using markModified since points is Mixed
+        existing.markModified('points');
+        await existing.save();
+      } else if (data.type === 'shape') {
+        existing.end = data.end;
         await existing.save();
       }
     } else {
-      // Create new stroke
+      // Create new element
       await Element.create({
         elementId,
         roomId,
         userId,
-        type: 'stroke',
+        type: data.type || 'stroke',
+        shapeType: data.shapeType,
+        start: data.start,
+        end: data.end,
         points: points || [],
         color: color || '#000000',
         lineWidth: lineWidth || 2,
         tool: tool || 'pen',
+        theme: theme || 'dark'
       });
     }
   } catch (err) {
