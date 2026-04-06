@@ -63,7 +63,16 @@ export function useWebSocket(roomId) {
 
     // Cursors
     wsManager.on('cursor_move', ({ userId, username, x, y }) => {
-      updateCursor(userId, { x, y, username });
+      const memberName = useRoomStore
+        .getState()
+        .members
+        .find(member => member.userId === userId)?.username;
+
+      updateCursor(userId, {
+        x,
+        y,
+        username: username || memberName || 'User',
+      });
     });
 
     // Polls

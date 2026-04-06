@@ -126,9 +126,7 @@ export function useCanvas(canvasRef) {
     const now = Date.now();
     if (now - lastCursorEmit.current > 50) {
       lastCursorEmit.current = now;
-      const user = useAuthStore.getState().user;
-      const username = user ? user.username : 'Anonymous';
-      wsManager.send('cursor_move', { x: pos.x, y: pos.y, username }, roomId);
+      wsManager.send('cursor_move', { x: pos.x, y: pos.y }, roomId);
     }
 
     if (!isDrawing.current || !hasPermission) return;

@@ -16,6 +16,12 @@ function getCursorColor(userId) {
   return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
 }
 
+function getDisplayName(username) {
+  const trimmed = username?.trim();
+  if (!trimmed) return 'User';
+  return trimmed.length > 18 ? `${trimmed.slice(0, 18)}...` : trimmed;
+}
+
 export default function CursorOverlay() {
   const cursors = useUIStore(s => s.cursors);
   const myUserId = useAuthStore(s => s.user?._id);
@@ -26,6 +32,7 @@ export default function CursorOverlay() {
         {Object.entries(cursors).map(([userId, data]) => {
           if (userId === myUserId) return null;
           const color = getCursorColor(userId);
+          const displayName = getDisplayName(data.username);
           
           return (
             <motion.div
@@ -53,14 +60,15 @@ export default function CursorOverlay() {
               >
                 <path d="M0 0L16 12H8L5.6 19.2L0 0Z" />
               </svg>
-              <motion.span
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, transition: { delay: 0.1 } }}
-                className="absolute top-[18px] left-[10px] px-1.5 py-[2px] text-[10px] font-bold text-white rounded-md whitespace-nowrap shadow-md whitespace-pre"
+                className="absolute left-[12px] top-[16px] flex items-center gap-1 rounded-full border border-white/15 px-2 py-1 text-[11px] font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.28)] whitespace-nowrap"
                 style={{ backgroundColor: color }}
               >
-                {data.username || 'User'}
-              </motion.span>
+                <span className="h-1.5 w-1.5 rounded-full bg-white/90 shrink-0" />
+                <span className="max-w-36 truncate">{displayName}</span>
+              </motion.div>
             </motion.div>
           );
         })}
