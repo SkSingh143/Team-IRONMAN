@@ -13,6 +13,7 @@ import Toolbar from '../components/canvas/Toolbar';
 import CursorOverlay from '../components/canvas/CursorOverlay';
 import CodePanel from '../components/code/CodePanel';
 import PollPanel from '../components/poll/PollPanel';
+import VoicePanel from '../components/voice/VoicePanel';
 import '../styles/room.css';
 
 // Tab icons
@@ -229,16 +230,7 @@ export default function RoomPage() {
             )}
             {activeTab === 'code' && <CodePanel />}
             {activeTab === 'poll' && <PollPanel />}
-            {activeTab === 'voice' && (
-              <div className="room-content-placeholder">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                  <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                </svg>
-                <h3>Voice Chat</h3>
-                <p>Talk to your team via WebRTC audio. Coming in Phase 5.</p>
-              </div>
-            )}
+            {activeTab === 'voice' && <VoicePanel />}
           </div>
         </div>
 
